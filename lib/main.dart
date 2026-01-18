@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'homepage.dart';
+import 'package:skillsync_sp2/main_page.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:firebase_core/firebase_core.dart';
 
-void main() async{
+void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   await Firebase.initializeApp();
@@ -33,8 +33,8 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: const Homepage(),
+      theme: ThemeData(primarySwatch: Colors.purple),
+      home: MainPage(),
     );
   }
 }
