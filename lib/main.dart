@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:skillsync_sp2/main_page.dart';
+import 'package:skillsync_sp2/auth/main_page.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:firebase_core/firebase_core.dart';
 
