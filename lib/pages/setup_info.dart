@@ -1,5 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:skillsync_sp2/pages/home.dart';
+import 'package:skillsync_sp2/services/user_service.dart';
 
 class SetupInfoPage extends StatefulWidget {
   const SetupInfoPage({super.key});
@@ -12,6 +15,10 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _githubController = TextEditingController();
+
+  final UserService _userService = UserService();
+  final User? _currentUser = FirebaseAuth.instance.currentUser;
+  bool _isLoading = false;
 
   String? _selectedMajor;
   String? _selectedYear;
@@ -224,7 +231,7 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
     );
   }
 
-  void _saveProfile() {
+  Future<void> _saveProfile() async {
     // Validate required fields
     if (_nameController.text.trim().isEmpty) {
       _showSnackBar('Please enter your name');
@@ -247,8 +254,40 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
       return;
     }
 
-    // TODO: Save profile to Firebase
-    _showSnackBar('Profile saved successfully!');
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await _userService.saveUserProfile(
+        name: _nameController.text.trim(),
+        major: _selectedMajor!,
+        yearOfStudy: _selectedYear!,
+        phoneNumber: _phoneController.text.trim(),
+        skills: _selectedSkills,
+        githubUrl: _githubController.text.trim().isNotEmpty
+            ? _githubController.text.trim()
+            : null,
+      );
+
+      if (mounted) {
+        _showSnackBar('Profile saved successfully!');
+        // Navigate to home page after successful save
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar('Error saving profile: ${e.toString()}');
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   void _showSnackBar(String message) {
@@ -304,7 +343,50 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                     style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                   ),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 16),
+
+                // Email display (from Firebase Auth)
+                if (_currentUser?.email != null)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Colors.purple.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.purple.withValues(alpha: 0.2)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.email_outlined, color: Colors.purple),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Email',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _currentUser!.email!,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(Icons.verified, color: Colors.green[600], size: 20),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 20),
 
                 // Name field
                 TextField(
@@ -493,22 +575,32 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: _saveProfile,
+                    onPressed: _isLoading ? null : _saveProfile,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.purple,
                       foregroundColor: Colors.white,
+                      disabledBackgroundColor: Colors.purple.withValues(alpha: 0.6),
                       elevation: 2,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.0),
                       ),
                     ),
-                    child: const Text(
-                      'Save Profile',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : const Text(
+                            'Save Profile',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
                 const SizedBox(height: 40),
