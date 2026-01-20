@@ -9,36 +9,16 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final user = FirebaseAuth.instance.currentUser!;
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Home Page'),
         backgroundColor: Colors.deepPurple[200],
         foregroundColor: Colors.white,
       ),
-      body: SafeArea(
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('Signed in as ${user.email}'),
-              MaterialButton(
-                onPressed: () {
-                  FirebaseAuth.instance.signOut();
-                },
-                color: Colors.deepPurple[200],
-                child: const Text(
-                  'Sign Out',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+      body: const Center(child: Text('Welcome to the Home Page!')),
     );
   }
 }
