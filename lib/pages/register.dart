@@ -97,8 +97,8 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12.0),
-                        borderSide: const BorderSide(
-                          color: Colors.purple,
+                        borderSide: BorderSide(
+                          color: Colors.deepPurple[500]!,
                           width: 2,
                         ),
                       ),
@@ -136,8 +136,8 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12.0),
-                        borderSide: const BorderSide(
-                          color: Colors.purple,
+                        borderSide: BorderSide(
+                          color: Colors.deepPurple[500]!,
                           width: 2,
                         ),
                       ),
@@ -175,8 +175,8 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12.0),
-                        borderSide: const BorderSide(
-                          color: Colors.purple,
+                        borderSide: BorderSide(
+                          color: Colors.deepPurple[500]!,
                           width: 2,
                         ),
                       ),
@@ -196,7 +196,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         signUp();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.purple,
+                        backgroundColor: Colors.deepPurple[500],
                         foregroundColor: Colors.white,
                         elevation: 2,
                         shape: RoundedRectangleBorder(
@@ -227,7 +227,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         child: const Text(
                           'Login now',
                           style: TextStyle(
-                            color: Colors.purple,
+                            color: Colors.deepPurple,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:skillsync_sp2/auth/auth_page.dart';
-import 'package:skillsync_sp2/pages/home.dart';
 import 'package:skillsync_sp2/pages/setup_info.dart';
+import 'package:skillsync_sp2/pages/navigation_bar.dart';
 
 class MainPage extends StatelessWidget {
   const MainPage({super.key});
@@ -25,14 +25,13 @@ class MainPage extends StatelessWidget {
           if (snapshot.hasData) {
             final user = snapshot.data!;
             return FutureBuilder<bool>(
-              key: ValueKey(user.uid),
               future: _checkHasCompletedSetup(user.uid),
               builder: (context, setupSnapshot) {
                 if (setupSnapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (setupSnapshot.data == true) {
-                  return const HomePage();
+                  return NavigationPage();
                 }
                 return const SetupInfoPage();
               },

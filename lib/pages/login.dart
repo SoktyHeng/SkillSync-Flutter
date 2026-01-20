@@ -150,8 +150,8 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12.0),
-                        borderSide: const BorderSide(
-                          color: Colors.purple,
+                        borderSide: BorderSide(
+                          color: Colors.deepPurple[500]!,
                           width: 2,
                         ),
                       ),
@@ -189,8 +189,8 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12.0),
-                        borderSide: const BorderSide(
-                          color: Colors.purple,
+                        borderSide: BorderSide(
+                          color: Colors.deepPurple[500]!,
                           width: 2,
                         ),
                       ),
@@ -216,10 +216,10 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                           );
                         },
-                        child: const Text(
+                        child: Text(
                           'Forgot Password?',
                           style: TextStyle(
-                            color: Colors.purple,
+                            color: Colors.deepPurple[500]!,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -238,7 +238,7 @@ class _LoginPageState extends State<LoginPage> {
                         signIn();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.purple,
+                        backgroundColor: Colors.deepPurple[500],
                         foregroundColor: Colors.white,
                         elevation: 2,
                         shape: RoundedRectangleBorder(
@@ -305,10 +305,10 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       GestureDetector(
                         onTap: widget.showRegisterPage,
-                        child: const Text(
+                        child: Text(
                           'Sign Up',
                           style: TextStyle(
-                            color: Colors.purple,
+                            color: Colors.deepPurple[500]!,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
