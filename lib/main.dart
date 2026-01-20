@@ -1,12 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:skillsync_sp2/auth/main_page.dart';
+import 'package:skillsync_sp2/pages/home.dart';
+import 'package:skillsync_sp2/pages/setup_info.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   await Firebase.initializeApp();
+
+  // Configure Firestore settings
+  FirebaseFirestore.instance.settings = const Settings(
+    persistenceEnabled: true,
+    cacheSizeBytes: Settings.CACHE_SIZE_UNLIMITED,
+  );
+
   runApp(const MyApp());
 }
 
@@ -35,6 +45,10 @@ class _MyAppState extends State<MyApp> {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(primarySwatch: Colors.purple),
       home: MainPage(),
+      routes: {
+        '/home': (context) => const HomePage(),
+        '/setup': (context) => const SetupInfoPage(),
+      },
     );
   }
 }

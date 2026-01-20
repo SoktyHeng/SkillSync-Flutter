@@ -16,7 +16,8 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home Page'),
-        backgroundColor: Colors.purple,
+        backgroundColor: Colors.deepPurple[200],
+        foregroundColor: Colors.white,
       ),
       body: SafeArea(
         child: Center(
@@ -28,7 +29,7 @@ class _HomePageState extends State<HomePage> {
                 onPressed: () {
                   FirebaseAuth.instance.signOut();
                 },
-                color: Colors.purple,
+                color: Colors.deepPurple[200],
                 child: const Text(
                   'Sign Out',
                   style: TextStyle(color: Colors.white),
