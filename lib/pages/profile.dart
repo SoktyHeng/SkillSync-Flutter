@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:skillsync_sp2/pages/edit_profile.dart';
+import 'package:skillsync_sp2/services/user_service.dart';
 import 'package:skillsync_sp2/utils/profile_menu.dart';
 import 'package:skillsync_sp2/utils/profile_pic.dart';
 
@@ -13,6 +14,23 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final user = FirebaseAuth.instance.currentUser!;
+  final UserService _userService = UserService();
+  String _userName = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserName();
+  }
+
+  Future<void> _loadUserName() async {
+    final userData = await _userService.getUserProfile();
+    if (mounted && userData != null) {
+      setState(() {
+        _userName = userData['name'] ?? '';
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,17 +47,36 @@ class _ProfilePageState extends State<ProfilePage> {
               const SizedBox(height: 20),
 
               // Name
-              Text(
-                "Sokty Heng",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
-              ),
+              _userName.isNotEmpty
+                  ? Text(
+                      _userName,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    )
+                  : const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
 
               const SizedBox(height: 10),
 
               // Profile Menu
-              ProfileMenu(text: "My Account", icon: Icons.person, press: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const EditProfilePage()));
-              }),
+              ProfileMenu(
+                text: "My Account",
+                icon: Icons.person,
+                press: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const EditProfilePage(),
+                    ),
+                  );
+                  _loadUserName();
+                },
+              ),
               ProfileMenu(
                 text: "Notifications",
                 icon: Icons.notifications,
