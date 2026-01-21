@@ -87,19 +87,14 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
       labelText: label,
       hintText: hint,
       prefixIcon: Icon(icon),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12.0),
-      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0)),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.0),
         borderSide: BorderSide(color: Colors.grey[300]!),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.0),
-        borderSide: const BorderSide(
-          color: Colors.purple,
-          width: 2,
-        ),
+        borderSide: BorderSide(color: Colors.deepPurple[500]!, width: 2),
       ),
       filled: true,
       fillColor: Colors.white,
@@ -148,10 +143,7 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                       const SizedBox(height: 8),
                       Text(
                         'Choose skills that best describe your expertise',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
                       const SizedBox(height: 20),
                       Expanded(
@@ -161,8 +153,9 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                             spacing: 8,
                             runSpacing: 8,
                             children: _availableSkills.map((skill) {
-                              final isSelected =
-                                  _selectedSkills.contains(skill);
+                              final isSelected = _selectedSkills.contains(
+                                skill,
+                              );
                               return FilterChip(
                                 label: Text(skill),
                                 selected: isSelected,
@@ -176,11 +169,13 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                                   });
                                   setState(() {});
                                 },
-                                selectedColor: Colors.purple.withValues(alpha: 0.2),
-                                checkmarkColor: Colors.purple,
+                                selectedColor: Colors.deepPurple[500]
+                                    ?.withValues(alpha: 0.2),
+                                checkmarkColor: Colors.deepPurple[700],
                                 labelStyle: TextStyle(
-                                  color:
-                                      isSelected ? Colors.purple : Colors.black,
+                                  color: isSelected
+                                      ? Colors.deepPurple[500]
+                                      : Colors.black,
                                   fontWeight: isSelected
                                       ? FontWeight.w600
                                       : FontWeight.normal,
@@ -189,7 +184,7 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                                   borderRadius: BorderRadius.circular(20),
                                   side: BorderSide(
                                     color: isSelected
-                                        ? Colors.purple
+                                        ? Colors.deepPurple[500]!
                                         : Colors.grey[300]!,
                                   ),
                                 ),
@@ -205,7 +200,7 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                         child: ElevatedButton(
                           onPressed: () => Navigator.pop(context),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.purple,
+                            backgroundColor: Colors.deepPurple[500],
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
@@ -295,9 +290,7 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
       SnackBar(
         content: Text(message),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
@@ -316,16 +309,16 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                 const SizedBox(height: 40),
 
                 // Header
-                const Center(
+                Center(
                   child: Column(
                     children: [
                       Icon(
                         Icons.person_outline,
                         size: 80,
-                        color: Colors.purple,
+                        color: Colors.deepPurple[500],
                       ),
-                      SizedBox(height: 16),
-                      Text(
+                      const SizedBox(height: 16),
+                      const Text(
                         'Complete Your Profile',
                         style: TextStyle(
                           fontSize: 28,
@@ -333,7 +326,7 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                           color: Colors.black87,
                         ),
                       ),
-                      SizedBox(height: 8),
+                      const SizedBox(height: 8),
                     ],
                   ),
                 ),
@@ -351,13 +344,18 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.purple.withValues(alpha: 0.05),
+                      color: Colors.deepPurple[500]?.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.purple.withValues(alpha: 0.2)),
+                      border: Border.all(
+                        color: Colors.deepPurple[500]!.withValues(alpha: 0.2),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.email_outlined, color: Colors.purple),
+                        Icon(
+                          Icons.email_outlined,
+                          color: Colors.deepPurple[500],
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -382,7 +380,11 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                             ],
                           ),
                         ),
-                        Icon(Icons.verified, color: Colors.green[600], size: 20),
+                        Icon(
+                          Icons.verified,
+                          color: Colors.green[600],
+                          size: 20,
+                        ),
                       ],
                     ),
                   ),
@@ -408,10 +410,7 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                     icon: Icons.school_outlined,
                   ),
                   items: _majors.map((major) {
-                    return DropdownMenuItem(
-                      value: major,
-                      child: Text(major),
-                    );
+                    return DropdownMenuItem(value: major, child: Text(major));
                   }).toList(),
                   onChanged: (value) {
                     setState(() {
@@ -431,10 +430,7 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                     icon: Icons.calendar_today_outlined,
                   ),
                   items: _years.map((year) {
-                    return DropdownMenuItem(
-                      value: year,
-                      child: Text(year),
-                    );
+                    return DropdownMenuItem(value: year, child: Text(year));
                   }).toList(),
                   onChanged: (value) {
                     setState(() {
@@ -450,9 +446,7 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                 TextField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.digitsOnly,
-                  ],
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   decoration: _buildInputDecoration(
                     label: 'Phone Number',
                     icon: Icons.phone_outlined,
@@ -484,8 +478,10 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                     child: _selectedSkills.isEmpty
                         ? Row(
                             children: [
-                              Icon(Icons.add_circle_outline,
-                                  color: Colors.grey[600]),
+                              Icon(
+                                Icons.add_circle_outline,
+                                color: Colors.grey[600],
+                              ),
                               const SizedBox(width: 12),
                               Text(
                                 'Tap to select your skills',
@@ -503,16 +499,17 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                               return Chip(
                                 label: Text(
                                   skill,
-                                  style: const TextStyle(
-                                    color: Colors.purple,
+                                  style: TextStyle(
+                                    color: Colors.deepPurple[500],
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
-                                backgroundColor: Colors.purple.withValues(alpha: 0.1),
-                                deleteIcon: const Icon(
+                                backgroundColor: Colors.deepPurple[500]
+                                    ?.withValues(alpha: 0.1),
+                                deleteIcon: Icon(
                                   Icons.close,
                                   size: 18,
-                                  color: Colors.purple,
+                                  color: Colors.deepPurple[500],
                                 ),
                                 onDeleted: () {
                                   setState(() {
@@ -521,7 +518,9 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                                 },
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(20),
-                                  side: const BorderSide(color: Colors.purple),
+                                  side: BorderSide(
+                                    color: Colors.deepPurple[500]!,
+                                  ),
                                 ),
                               );
                             }).toList(),
@@ -538,10 +537,7 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                     labelText: 'GitHub Profile (Optional)',
                     hintText: 'https://github.com/username',
                     prefixIcon: const Icon(Icons.code),
-                    suffixIcon: Icon(
-                      Icons.link,
-                      color: Colors.grey[400],
-                    ),
+                    suffixIcon: Icon(Icons.link, color: Colors.grey[400]),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.0),
                     ),
@@ -551,8 +547,8 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.0),
-                      borderSide: const BorderSide(
-                        color: Colors.purple,
+                      borderSide: BorderSide(
+                        color: Colors.deepPurple[500]!,
                         width: 2,
                       ),
                     ),
@@ -563,10 +559,7 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                 const SizedBox(height: 8),
                 Text(
                   'Link your GitHub to showcase your projects',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[500],
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                 ),
                 const SizedBox(height: 32),
 
@@ -577,9 +570,10 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _saveProfile,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.purple,
+                      backgroundColor: Colors.deepPurple[500],
                       foregroundColor: Colors.white,
-                      disabledBackgroundColor: Colors.purple.withValues(alpha: 0.6),
+                      disabledBackgroundColor: Colors.deepPurple[500]
+                          ?.withValues(alpha: 0.6),
                       elevation: 2,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.0),

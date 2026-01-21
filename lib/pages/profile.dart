@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:skillsync_sp2/pages/edit_profile.dart';
 import 'package:skillsync_sp2/utils/profile_menu.dart';
 import 'package:skillsync_sp2/utils/profile_pic.dart';
 
@@ -36,7 +37,9 @@ class _ProfilePageState extends State<ProfilePage> {
               const SizedBox(height: 10),
 
               // Profile Menu
-              ProfileMenu(text: "My Account", icon: Icons.person, press: () {}),
+              ProfileMenu(text: "My Account", icon: Icons.person, press: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const EditProfilePage()));
+              }),
               ProfileMenu(
                 text: "Notifications",
                 icon: Icons.notifications,
