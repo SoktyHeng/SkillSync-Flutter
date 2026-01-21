@@ -1,10 +1,14 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 
 class UserService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   // Get current user's email
   String? get currentUserEmail => _auth.currentUser?.email;
@@ -106,5 +110,45 @@ class UserService {
     data['updatedAt'] = FieldValue.serverTimestamp();
 
     await _firestore.collection('users').doc(user.uid).update(data);
+  }
+
+  // Upload profile image to Firebase Storage
+  Future<String> uploadProfileImage(File imageFile) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('No user logged in');
+    }
+
+    try {
+      // Create reference to profile_images folder with user's UID
+      final ref = _storage.ref().child('profile_images/${user.uid}.jpg');
+
+      // Upload the file
+      await ref.putFile(
+        imageFile,
+        SettableMetadata(contentType: 'image/jpeg'),
+      );
+
+      // Get the download URL
+      final downloadUrl = await ref.getDownloadURL();
+
+      // Update user profile with the new image URL
+      await updateUserProfile({'profileImageUrl': downloadUrl});
+
+      debugPrint('Profile image uploaded successfully: $downloadUrl');
+      return downloadUrl;
+    } catch (e) {
+      debugPrint('Error uploading profile image: $e');
+      rethrow;
+    }
+  }
+
+  // Get profile image URL
+  Future<String?> getProfileImageUrl() async {
+    final user = _auth.currentUser;
+    if (user == null) return null;
+
+    final userData = await getUserProfile();
+    return userData?['profileImageUrl'];
   }
 }
