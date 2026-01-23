@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:skillsync_sp2/pages/user_profile.dart';
 import 'package:skillsync_sp2/services/project_service.dart';
 
 class ProjectDetail extends StatefulWidget {
@@ -97,62 +98,78 @@ class _ProjectDetailState extends State<ProjectDetail> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Creator Info Section
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.grey[50],
-                border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 28,
-                    backgroundColor: Colors.deepPurple[100],
-                    backgroundImage: _creatorImageUrl != null
-                        ? NetworkImage(_creatorImageUrl!)
-                        : null,
-                    child: _isLoading
-                        ? SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.deepPurple[300],
-                            ),
-                          )
-                        : _creatorImageUrl == null
-                        ? Icon(
-                            Icons.person,
-                            color: Colors.deepPurple[400],
-                            size: 28,
-                          )
-                        : null,
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _creatorName.isNotEmpty ? _creatorName : 'Loading...',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Posted ${_getTimeAgo(widget.project['createdAt'] as Timestamp?)}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
+            // Creator Info Section - Tappable to view profile
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => UserProfilePage(
+                      userId: widget.project['uid'],
                     ),
                   ),
-                ],
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+                ),
+                child: Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 28,
+                      backgroundColor: Colors.deepPurple[100],
+                      backgroundImage: _creatorImageUrl != null
+                          ? NetworkImage(_creatorImageUrl!)
+                          : null,
+                      child: _isLoading
+                          ? SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.deepPurple[300],
+                              ),
+                            )
+                          : _creatorImageUrl == null
+                          ? Icon(
+                              Icons.person,
+                              color: Colors.deepPurple[400],
+                              size: 28,
+                            )
+                          : null,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _creatorName.isNotEmpty ? _creatorName : 'Loading...',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Posted ${_getTimeAgo(widget.project['createdAt'] as Timestamp?)}',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right,
+                      color: Colors.grey[400],
+                    ),
+                  ],
+                ),
               ),
             ),
 

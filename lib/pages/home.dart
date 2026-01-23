@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:skillsync_sp2/pages/project_detail.dart';
+import 'package:skillsync_sp2/pages/user_profile.dart';
 import 'package:skillsync_sp2/services/project_service.dart';
 
 class HomePage extends StatefulWidget {
@@ -248,36 +249,44 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
             // Creator Info Row
             Row(
               children: [
-                // Profile Picture
-                CircleAvatar(
-                  radius: 22,
-                  backgroundColor: Colors.deepPurple[100],
-                  backgroundImage: _creatorImageUrl != null
-                      ? NetworkImage(_creatorImageUrl!)
-                      : null,
-                  child: _isLoading
-                      ? SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.deepPurple[300],
-                          ),
-                        )
-                      : _creatorImageUrl == null
-                      ? Icon(
-                          Icons.person,
-                          color: Colors.deepPurple[400],
-                          size: 24,
-                        )
-                      : null,
-                ),
-                const SizedBox(width: 12),
-                // Creator Name and Duration
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                // Profile Picture and Name - Tappable to view profile
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => UserProfilePage(
+                          userId: widget.project['uid'],
+                        ),
+                      ),
+                    );
+                  },
+                  child: Row(
                     children: [
+                      CircleAvatar(
+                        radius: 22,
+                        backgroundColor: Colors.deepPurple[100],
+                        backgroundImage: _creatorImageUrl != null
+                            ? NetworkImage(_creatorImageUrl!)
+                            : null,
+                        child: _isLoading
+                            ? SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.deepPurple[300],
+                                ),
+                              )
+                            : _creatorImageUrl == null
+                            ? Icon(
+                                Icons.person,
+                                color: Colors.deepPurple[400],
+                                size: 24,
+                              )
+                            : null,
+                      ),
+                      const SizedBox(width: 12),
                       Text(
                         _creatorName.isNotEmpty ? _creatorName : 'Loading...',
                         style: const TextStyle(
@@ -288,6 +297,7 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
                     ],
                   ),
                 ),
+                const Spacer(),
                 // Time ago
                 Text(
                   _getTimeAgo(widget.project['createdAt'] as Timestamp?),
