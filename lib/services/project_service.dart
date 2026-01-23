@@ -15,6 +15,7 @@ class ProjectService {
     required String description,
     required List<String> techStack,
     required List<String> lookingFor,
+    String? duration,
   }) async {
     final user = _auth.currentUser;
     if (user == null) {
@@ -27,6 +28,7 @@ class ProjectService {
       'description': description,
       'techStack': techStack,
       'lookingFor': lookingFor,
+      'duration': duration,
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };
@@ -69,6 +71,7 @@ class ProjectService {
     required String description,
     required List<String> techStack,
     required List<String> lookingFor,
+    String? duration,
   }) async {
     final user = _auth.currentUser;
     if (user == null) {
@@ -81,6 +84,7 @@ class ProjectService {
         'description': description,
         'techStack': techStack,
         'lookingFor': lookingFor,
+        'duration': duration,
         'updatedAt': FieldValue.serverTimestamp(),
       });
       debugPrint('Project updated successfully');

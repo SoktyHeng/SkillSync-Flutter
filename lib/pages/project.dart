@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:skillsync_sp2/pages/project_creation.dart';
 import 'package:skillsync_sp2/services/project_service.dart';
 
 class ProjectPage extends StatefulWidget {
@@ -14,269 +15,7 @@ class _ProjectPageState extends State<ProjectPage> {
   final ProjectService _projectService = ProjectService();
   final user = FirebaseAuth.instance.currentUser!;
 
-  void _showCreateProjectDialog() {
-    final titleController = TextEditingController();
-    final descriptionController = TextEditingController();
-    final techStackController = TextEditingController();
-    final lookingForController = TextEditingController();
-    bool isLoading = false;
 
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return Dialog(
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Post a New Project',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          IconButton(
-                            onPressed: () => Navigator.pop(context),
-                            icon: const Icon(Icons.close),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Project Title
-                      const Text(
-                        'Project Title',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: titleController,
-                        decoration: _buildInputDecoration(
-                          hint: 'Enter your project title',
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Description
-                      const Text(
-                        'Description',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: descriptionController,
-                        maxLines: 4,
-                        decoration: _buildInputDecoration(
-                          hint:
-                              'Describe your project and what you\'re looking to build...',
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Tech Stack
-                      const Text(
-                        'Tech Stack (comma separated)',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: techStackController,
-                        decoration: _buildInputDecoration(
-                          hint: 'e.g., React, Node.js, MongoDB',
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Looking For
-                      const Text(
-                        'Looking For (roles needed)',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      TextField(
-                        controller: lookingForController,
-                        decoration: _buildInputDecoration(
-                          hint: 'e.g., Frontend Developer, UI Designer',
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Buttons
-                      Row(
-                        children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: OutlinedButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                                side: BorderSide(color: Colors.grey[300]!),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              child: const Text(
-                                'Cancel',
-                                style: TextStyle(
-                                  color: Colors.black87,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: isLoading
-                                  ? null
-                                  : () async {
-                                      if (titleController.text.trim().isEmpty) {
-                                        _showSnackBar(
-                                          'Please enter a project title',
-                                        );
-                                        return;
-                                      }
-                                      if (descriptionController.text
-                                          .trim()
-                                          .isEmpty) {
-                                        _showSnackBar(
-                                          'Please enter a description',
-                                        );
-                                        return;
-                                      }
-
-                                      setDialogState(() {
-                                        isLoading = true;
-                                      });
-
-                                      try {
-                                        final techStack = techStackController
-                                            .text
-                                            .split(',')
-                                            .map((e) => e.trim())
-                                            .where((e) => e.isNotEmpty)
-                                            .toList();
-
-                                        final lookingFor = lookingForController
-                                            .text
-                                            .split(',')
-                                            .map((e) => e.trim())
-                                            .where((e) => e.isNotEmpty)
-                                            .toList();
-
-                                        await _projectService.createProject(
-                                          title: titleController.text.trim(),
-                                          description: descriptionController
-                                              .text
-                                              .trim(),
-                                          techStack: techStack,
-                                          lookingFor: lookingFor,
-                                        );
-
-                                        if (context.mounted) {
-                                          Navigator.pop(context);
-                                          _showSnackBar(
-                                            'Project posted successfully!',
-                                          );
-                                        }
-                                      } catch (e) {
-                                        setDialogState(() {
-                                          isLoading = false;
-                                        });
-                                        _showSnackBar(
-                                          'Error posting project: ${e.toString()}',
-                                        );
-                                      }
-                                    },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.deepPurple[500],
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              child: isLoading
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 2,
-                                      ),
-                                    )
-                                  : const Text(
-                                      'Post',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  InputDecoration _buildInputDecoration({required String hint}) {
-    return InputDecoration(
-      hintText: hint,
-      hintStyle: TextStyle(color: Colors.grey[400]),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.grey[300]!),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.grey[300]!),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.deepPurple[500]!, width: 2),
-      ),
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-    );
-  }
 
   void _showSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -319,7 +58,14 @@ class _ProjectPageState extends State<ProjectPage> {
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
             child: IconButton(
-              onPressed: _showCreateProjectDialog,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ProjectCreation(),
+                  ),
+                );
+              },
               icon: Icon(
                 Icons.add_circle_outline,
                 color: Colors.deepPurple[500],
@@ -477,6 +223,7 @@ class _ProjectCardState extends State<_ProjectCard> {
   Widget build(BuildContext context) {
     final techStack = List<String>.from(widget.project['techStack'] ?? []);
     final lookingFor = List<String>.from(widget.project['lookingFor'] ?? []);
+    final duration = widget.project['duration'] as String?;
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
@@ -593,6 +340,37 @@ class _ProjectCardState extends State<_ProjectCard> {
                     ),
                   );
                 }).toList(),
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Duration
+            if (duration != null && duration.isNotEmpty) ...[
+              Row(
+                children: [
+                  Icon(
+                    Icons.schedule,
+                    size: 16,
+                    color: Colors.grey[600],
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Duration: ',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                  Text(
+                    duration,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.deepPurple[600],
+                    ),
+                  ),
+                ],
               ),
             ],
 
