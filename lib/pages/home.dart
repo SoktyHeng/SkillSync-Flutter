@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:skillsync_sp2/pages/project_detail.dart';
 import 'package:skillsync_sp2/services/project_service.dart';
 
 class HomePage extends StatefulWidget {
@@ -161,8 +162,10 @@ class _HomePageState extends State<HomePage> {
                   itemBuilder: (context, index) {
                     final project =
                         projects[index].data() as Map<String, dynamic>;
+                    final projectId = projects[index].id;
                     return _ProjectFeedCard(
                       project: project,
+                      projectId: projectId,
                       projectService: _projectService,
                     );
                   },
@@ -178,9 +181,14 @@ class _HomePageState extends State<HomePage> {
 
 class _ProjectFeedCard extends StatefulWidget {
   final Map<String, dynamic> project;
+  final String projectId;
   final ProjectService projectService;
 
-  const _ProjectFeedCard({required this.project, required this.projectService});
+  const _ProjectFeedCard({
+    required this.project,
+    required this.projectId,
+    required this.projectService,
+  });
 
   @override
   State<_ProjectFeedCard> createState() => _ProjectFeedCardState();
@@ -214,11 +222,22 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
   Widget build(BuildContext context) {
     final techStack = List<String>.from(widget.project['techStack'] ?? []);
     final lookingFor = List<String>.from(widget.project['lookingFor'] ?? []);
-    final duration = widget.project['duration'] as String?;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ProjectDetail(
+              project: widget.project,
+              projectId: widget.projectId,
+            ),
+          ),
+        );
+      },
+      child: Card(
+        margin: const EdgeInsets.only(bottom: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 2,
       color: Colors.white,
       child: Padding(
@@ -266,24 +285,6 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      if (duration != null && duration.isNotEmpty)
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.schedule,
-                              size: 14,
-                              color: Colors.grey[500],
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              duration,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[500],
-                              ),
-                            ),
-                          ],
-                        ),
                     ],
                   ),
                 ),
@@ -373,6 +374,7 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
           ],
         ),
       ),
+    ),
     );
   }
 

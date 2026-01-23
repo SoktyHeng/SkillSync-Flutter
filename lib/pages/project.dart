@@ -216,23 +216,6 @@ class _ProjectCard extends StatefulWidget {
 }
 
 class _ProjectCardState extends State<_ProjectCard> {
-  String _posterName = '';
-
-  @override
-  void initState() {
-    super.initState();
-    _loadPosterName();
-  }
-
-  Future<void> _loadPosterName() async {
-    final name = await widget.projectService.getUserName(widget.project['uid']);
-    if (mounted) {
-      setState(() {
-        _posterName = name;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final techStack = List<String>.from(widget.project['techStack'] ?? []);
@@ -390,25 +373,10 @@ class _ProjectCardState extends State<_ProjectCard> {
 
             const Divider(height: 32),
 
-            // Footer with poster name and action button
+            // Footer with action button
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                Row(
-                  children: [
-                    const Text(
-                      'Posted by ',
-                      style: TextStyle(fontSize: 13, color: Colors.grey),
-                    ),
-                    Text(
-                      _posterName.isNotEmpty ? _posterName : 'Loading...',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
                 if (widget.isOwner)
                   IconButton(
                     onPressed: widget.onDelete,
