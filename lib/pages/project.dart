@@ -51,7 +51,7 @@ class _ProjectPageState extends State<ProjectPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Projects'),
+        title: const Text('My Projects'),
         backgroundColor: Colors.white,
         elevation: 0,
         actions: [
@@ -75,7 +75,7 @@ class _ProjectPageState extends State<ProjectPage> {
         ],
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: _projectService.getAllProjects(),
+        stream: _projectService.getMyProjects(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
@@ -87,7 +87,21 @@ class _ProjectPageState extends State<ProjectPage> {
             );
           }
 
-          final projects = snapshot.data?.docs ?? [];
+          final projectDocs = snapshot.data?.docs ?? [];
+
+          // Sort by createdAt descending (newest first)
+          projectDocs.sort((a, b) {
+            final aData = a.data() as Map<String, dynamic>;
+            final bData = b.data() as Map<String, dynamic>;
+            final aTime = aData['createdAt'] as Timestamp?;
+            final bTime = bData['createdAt'] as Timestamp?;
+            if (aTime == null && bTime == null) return 0;
+            if (aTime == null) return 1;
+            if (bTime == null) return -1;
+            return bTime.compareTo(aTime);
+          });
+
+          final projects = projectDocs;
 
           if (projects.isEmpty) {
             return Center(
@@ -110,7 +124,7 @@ class _ProjectPageState extends State<ProjectPage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Be the first to post a project!',
+                    'Create your first project!',
                     style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                   ),
                   const SizedBox(height: 24),
