@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:skillsync_sp2/services/project_service.dart';
 
 class ProjectCreation extends StatefulWidget {
@@ -16,8 +17,9 @@ class _ProjectCreationState extends State<ProjectCreation> {
   final _descriptionController = TextEditingController();
   final _techStackController = TextEditingController();
   final _lookingForController = TextEditingController();
-  final _durationController = TextEditingController();
 
+  DateTimeRange? _selectedDateRange;
+  bool _isOngoing = false;
   bool _isLoading = false;
   bool _hasUnsavedChanges = false;
 
@@ -28,7 +30,6 @@ class _ProjectCreationState extends State<ProjectCreation> {
     _descriptionController.addListener(_onFormChanged);
     _techStackController.addListener(_onFormChanged);
     _lookingForController.addListener(_onFormChanged);
-    _durationController.addListener(_onFormChanged);
   }
 
   void _onFormChanged() {
@@ -37,7 +38,8 @@ class _ProjectCreationState extends State<ProjectCreation> {
         _descriptionController.text.isNotEmpty ||
         _techStackController.text.isNotEmpty ||
         _lookingForController.text.isNotEmpty ||
-        _durationController.text.isNotEmpty;
+        _selectedDateRange != null ||
+        _isOngoing;
 
     if (hasContent != _hasUnsavedChanges) {
       setState(() {
@@ -52,8 +54,55 @@ class _ProjectCreationState extends State<ProjectCreation> {
     _descriptionController.dispose();
     _techStackController.dispose();
     _lookingForController.dispose();
-    _durationController.dispose();
     super.dispose();
+  }
+
+  String _formatDateRange(DateTimeRange range) {
+    final dateFormat = DateFormat('d MMM yyyy');
+    return '${dateFormat.format(range.start)} - ${dateFormat.format(range.end)}';
+  }
+
+  String? _getDurationString() {
+    if (_isOngoing) {
+      return 'Ongoing';
+    } else if (_selectedDateRange != null) {
+      return _formatDateRange(_selectedDateRange!);
+    }
+    return null;
+  }
+
+  Future<void> _selectDateRange() async {
+    final now = DateTime.now();
+    final firstDate = DateTime(now.year, now.month, now.day);
+    final lastDate = DateTime(now.year + 5, 12, 31);
+
+    final picked = await showDateRangePicker(
+      context: context,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      initialDateRange: _selectedDateRange,
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Colors.deepPurple[500]!,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      setState(() {
+        _selectedDateRange = picked;
+        _isOngoing = false;
+        _onFormChanged();
+      });
+    }
   }
 
   Future<bool> _onWillPop() async {
@@ -119,9 +168,7 @@ class _ProjectCreationState extends State<ProjectCreation> {
           .where((e) => e.isNotEmpty)
           .toList();
 
-      final duration = _durationController.text.trim().isNotEmpty
-          ? _durationController.text.trim()
-          : null;
+      final duration = _getDurationString();
 
       await _projectService.createProject(
         title: _titleController.text.trim(),
@@ -269,11 +316,107 @@ class _ProjectCreationState extends State<ProjectCreation> {
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),
-                  TextField(
-                    controller: _durationController,
-                    decoration: _buildInputDecoration(
-                      hint: 'e.g., 2 weeks, 3 months, Ongoing',
+                  GestureDetector(
+                    onTap: _isOngoing ? null : _selectDateRange,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _isOngoing ? Colors.grey[100] : Colors.white,
+                        border: Border.all(
+                          color: _isOngoing
+                              ? Colors.grey[300]!
+                              : Colors.grey[300]!,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.calendar_today,
+                            size: 20,
+                            color: _isOngoing
+                                ? Colors.grey[400]
+                                : Colors.grey[600],
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              _selectedDateRange != null
+                                  ? _formatDateRange(_selectedDateRange!)
+                                  : 'Select date range',
+                              style: TextStyle(
+                                color: _selectedDateRange != null
+                                    ? Colors.black
+                                    : Colors.grey[400],
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                          if (_selectedDateRange != null && !_isOngoing)
+                            GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _selectedDateRange = null;
+                                  _onFormChanged();
+                                });
+                              },
+                              child: Icon(
+                                Icons.close,
+                                size: 20,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: Checkbox(
+                          value: _isOngoing,
+                          onChanged: (value) {
+                            setState(() {
+                              _isOngoing = value ?? false;
+                              if (_isOngoing) {
+                                _selectedDateRange = null;
+                              }
+                              _onFormChanged();
+                            });
+                          },
+                          activeColor: Colors.deepPurple[500],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _isOngoing = !_isOngoing;
+                            if (_isOngoing) {
+                              _selectedDateRange = null;
+                            }
+                            _onFormChanged();
+                          });
+                        },
+                        child: const Text(
+                          'Ongoing project (no end date)',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 32),
 

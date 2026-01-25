@@ -346,7 +346,7 @@ class _RequestCardState extends State<_RequestCard> {
     return Card(
       color: Colors.white,
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -480,8 +480,9 @@ class _ContributorCardState extends State<_ContributorCard> {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: Colors.white,
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       child: ListTile(
         onTap: () {
           Navigator.push(
