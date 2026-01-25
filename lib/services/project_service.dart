@@ -191,6 +191,22 @@ class ProjectService {
         .snapshots();
   }
 
+  // Get contributor count for a project
+  Future<int> getContributorCount(String projectId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('projects')
+          .doc(projectId)
+          .collection('requests')
+          .where('status', isEqualTo: 'accepted')
+          .get();
+      return snapshot.docs.length;
+    } catch (e) {
+      debugPrint('Error getting contributor count: $e');
+      return 0;
+    }
+  }
+
   // Accept a contribution request
   Future<void> acceptContributionRequest(
       String projectId, String requestId) async {
