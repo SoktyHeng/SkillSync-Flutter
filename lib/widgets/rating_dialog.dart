@@ -47,7 +47,9 @@ class _RatingDialogState extends State<RatingDialog> {
           content: const Text('Please select a rating'),
           backgroundColor: Colors.red[400],
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       return;
@@ -66,12 +68,16 @@ class _RatingDialogState extends State<RatingDialog> {
         Navigator.of(context).pop(true);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(widget.existingRating != null
-                ? 'Rating updated successfully'
-                : 'Rating submitted successfully'),
+            content: Text(
+              widget.existingRating != null
+                  ? 'Rating updated successfully'
+                  : 'Rating submitted successfully',
+            ),
             backgroundColor: Colors.green[600],
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
@@ -83,7 +89,9 @@ class _RatingDialogState extends State<RatingDialog> {
             content: Text('Error: ${e.toString()}'),
             backgroundColor: Colors.red[400],
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
@@ -95,6 +103,7 @@ class _RatingDialogState extends State<RatingDialog> {
     final isUpdate = widget.existingRating != null;
 
     return AlertDialog(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Text(
         isUpdate ? 'Update Rating' : 'Rate ${widget.userName}',
@@ -115,11 +124,10 @@ class _RatingDialogState extends State<RatingDialog> {
             ),
             const SizedBox(height: 8),
             Text(
-              _selectedRating == 0 ? 'Tap to rate' : _getRatingText(_selectedRating),
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
+              _selectedRating == 0
+                  ? 'Tap to rate'
+                  : _getRatingText(_selectedRating),
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
             const SizedBox(height: 24),
             TextField(
@@ -139,7 +147,10 @@ class _RatingDialogState extends State<RatingDialog> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.deepPurple[500]!, width: 2),
+                  borderSide: BorderSide(
+                    color: Colors.deepPurple[500]!,
+                    width: 2,
+                  ),
                 ),
                 filled: true,
                 fillColor: Colors.white,
@@ -150,11 +161,10 @@ class _RatingDialogState extends State<RatingDialog> {
       ),
       actions: [
         TextButton(
-          onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(false),
-          child: Text(
-            'Cancel',
-            style: TextStyle(color: Colors.grey[600]),
-          ),
+          onPressed: _isSubmitting
+              ? null
+              : () => Navigator.of(context).pop(false),
+          child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
         ),
         ElevatedButton(
           onPressed: _isSubmitting ? null : _submitRating,
