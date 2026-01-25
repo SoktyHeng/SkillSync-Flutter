@@ -228,11 +228,13 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
   String _creatorName = '';
   String? _creatorImageUrl;
   bool _isLoading = true;
+  int _contributorCount = 0;
 
   @override
   void initState() {
     super.initState();
     _loadCreatorInfo();
+    _loadContributorCount();
   }
 
   Future<void> _loadCreatorInfo() async {
@@ -244,6 +246,17 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
         _creatorName = userInfo['name'] ?? 'Unknown User';
         _creatorImageUrl = userInfo['profileImageUrl'];
         _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadContributorCount() async {
+    final count = await widget.projectService.getContributorCount(
+      widget.projectId,
+    );
+    if (mounted) {
+      setState(() {
+        _contributorCount = count;
       });
     }
   }
@@ -391,17 +404,11 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
               if (lookingFor.isNotEmpty) ...[
                 Row(
                   children: [
-                    Icon(
-                      Icons.people_outline,
-                      size: 16,
-                      color: Colors.green[600],
-                    ),
-                    const SizedBox(width: 6),
                     Expanded(
                       child: Text(
                         'Looking for: ${lookingFor.join(", ")}',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 13,
                           color: Colors.green[700],
                           fontWeight: FontWeight.w500,
                         ),
@@ -411,7 +418,24 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 12),
               ],
+
+              // Contributors count
+              Row(
+                children: [
+                  Icon(Icons.group, size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 6),
+                  Text(
+                    '$_contributorCount ${_contributorCount == 1 ? 'contributor' : 'contributors'}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[600],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),

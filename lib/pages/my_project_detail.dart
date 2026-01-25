@@ -281,7 +281,6 @@ class _MyProjectDetailState extends State<MyProjectDetail>
         }
 
         return ListView.builder(
-          // padding: const EdgeInsets.all(16),
           itemCount: contributors.length,
           itemBuilder: (context, index) {
             final contributor = contributors[index];
@@ -344,98 +343,56 @@ class _RequestCardState extends State<_RequestCard> {
   Widget build(BuildContext context) {
     return Card(
       color: Colors.white,
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 1),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
+      child: ListTile(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UserProfilePage(userId: widget.userId),
+            ),
+          );
+        },
+        leading: CircleAvatar(
+          radius: 24,
+          backgroundColor: Colors.deepPurple[100],
+          backgroundImage:
+              _userImageUrl != null ? NetworkImage(_userImageUrl!) : null,
+          child: _isLoading
+              ? SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.deepPurple[300],
+                  ),
+                )
+              : _userImageUrl == null
+                  ? Icon(Icons.person, color: Colors.deepPurple[400], size: 24)
+                  : null,
+        ),
+        title: Text(
+          _userName,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        subtitle: Text(
+          'Wants to contribute',
+          style: TextStyle(fontSize: 13, color: Colors.orange[600]),
+        ),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Profile Picture
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        UserProfilePage(userId: widget.userId),
-                  ),
-                );
-              },
-              child: CircleAvatar(
-                radius: 28,
-                backgroundColor: Colors.deepPurple[100],
-                backgroundImage: _userImageUrl != null
-                    ? NetworkImage(_userImageUrl!)
-                    : null,
-                child: _isLoading
-                    ? SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.deepPurple[300],
-                        ),
-                      )
-                    : _userImageUrl == null
-                    ? Icon(
-                        Icons.person,
-                        color: Colors.deepPurple[400],
-                        size: 28,
-                      )
-                    : null,
-              ),
+            IconButton(
+              onPressed: widget.onReject,
+              icon: Icon(Icons.close, color: Colors.red[400]),
+              style: IconButton.styleFrom(backgroundColor: Colors.red[50]),
             ),
-            const SizedBox(width: 16),
-
-            // Name
-            Expanded(
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          UserProfilePage(userId: widget.userId),
-                    ),
-                  );
-                },
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _userName,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Wants to contribute',
-                      style: TextStyle(fontSize: 13, color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Action Buttons
-            Row(
-              children: [
-                IconButton(
-                  onPressed: widget.onReject,
-                  icon: Icon(Icons.close, color: Colors.red[400]),
-                  style: IconButton.styleFrom(backgroundColor: Colors.red[50]),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: widget.onAccept,
-                  icon: Icon(Icons.check, color: Colors.green[600]),
-                  style: IconButton.styleFrom(
-                    backgroundColor: Colors.green[50],
-                  ),
-                ),
-              ],
+            const SizedBox(width: 4),
+            IconButton(
+              onPressed: widget.onAccept,
+              icon: Icon(Icons.check, color: Colors.green[600]),
+              style: IconButton.styleFrom(backgroundColor: Colors.green[50]),
             ),
           ],
         ),
@@ -480,7 +437,7 @@ class _ContributorCardState extends State<_ContributorCard> {
   Widget build(BuildContext context) {
     return Card(
       color: Colors.white,
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.only(bottom: 1),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       child: ListTile(
         onTap: () {
