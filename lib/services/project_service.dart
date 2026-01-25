@@ -57,10 +57,11 @@ class ProjectService {
       return const Stream.empty();
     }
 
+    // Note: Removed orderBy to avoid composite index requirement
+    // Sorting is done client-side in project.dart
     return _firestore
         .collection('projects')
         .where('uid', isEqualTo: user.uid)
-        .orderBy('createdAt', descending: true)
         .snapshots();
   }
 
@@ -117,6 +118,20 @@ class ProjectService {
       return doc.data()?['name'] ?? 'Unknown User';
     } catch (e) {
       return 'Unknown User';
+    }
+  }
+
+  // Get user info (name and profile image) by UID
+  Future<Map<String, String?>> getUserInfo(String uid) async {
+    try {
+      final doc = await _firestore.collection('users').doc(uid).get();
+      final data = doc.data();
+      return {
+        'name': data?['name'] ?? 'Unknown User',
+        'profileImageUrl': data?['profileImageUrl'],
+      };
+    } catch (e) {
+      return {'name': 'Unknown User', 'profileImageUrl': null};
     }
   }
 }

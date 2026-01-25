@@ -151,4 +151,10 @@ class UserService {
     final userData = await getUserProfile();
     return userData?['profileImageUrl'];
   }
+
+  // Get user profile by UID (for viewing other users)
+  Future<Map<String, dynamic>?> getUserProfileById(String uid) async {
+    final doc = await _firestore.collection('users').doc(uid).get();
+    return doc.data();
+  }
 }
