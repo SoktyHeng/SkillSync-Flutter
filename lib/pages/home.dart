@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:skillsync_sp2/pages/project_detail.dart';
 import 'package:skillsync_sp2/pages/user_profile.dart';
 import 'package:skillsync_sp2/services/project_service.dart';
@@ -18,21 +19,53 @@ class _HomePageState extends State<HomePage> {
 
   final List<String> _durationFilters = [
     'All',
-    '1 week',
-    '2 weeks',
-    '1 month',
-    '3 months',
-    'Ongoing',
+    'Less than 1 week',
+    '1-2 weeks',
+    '2-4 weeks',
+    '1-3 months',
+    '3+ months',
   ];
+
+  bool _matchesDurationFilter(String? durationString) {
+    if (_selectedDuration == 'All') return true;
+    if (durationString == null || durationString.isEmpty) return false;
+    if (durationString == 'Ongoing') return _selectedDuration == '3+ months';
+
+    // Parse duration string format: "25 Jan 2026 - 15 Feb 2026"
+    try {
+      final parts = durationString.split(' - ');
+      if (parts.length != 2) return false;
+
+      final dateFormat = DateFormat('d MMM yyyy');
+      final startDate = dateFormat.parse(parts[0]);
+      final endDate = dateFormat.parse(parts[1]);
+      final durationInDays = endDate.difference(startDate).inDays;
+
+      switch (_selectedDuration) {
+        case 'Less than 1 week':
+          return durationInDays < 7;
+        case '1-2 weeks':
+          return durationInDays >= 7 && durationInDays <= 14;
+        case '2-4 weeks':
+          return durationInDays >= 15 && durationInDays <= 30;
+        case '1-3 months':
+          return durationInDays >= 31 && durationInDays <= 90;
+        case '3+ months':
+          return durationInDays > 90;
+        default:
+          return true;
+      }
+    } catch (e) {
+      return false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: isDark ? null : Colors.grey[50],
-      appBar: AppBar(
-        title: const Text('Discover Projects'),
-      ),
+      appBar: AppBar(title: const Text('Discover Projects')),
       body: Column(
         children: [
           // Duration Filter Bar
@@ -110,9 +143,8 @@ class _HomePageState extends State<HomePage> {
 
                   // Apply duration filter
                   if (_selectedDuration != 'All') {
-                    final duration =
-                        (data['duration'] as String?)?.toLowerCase() ?? '';
-                    if (!duration.contains(_selectedDuration.toLowerCase())) {
+                    final duration = data['duration'] as String?;
+                    if (!_matchesDurationFilter(duration)) {
                       return false;
                     }
                   }
@@ -236,152 +268,154 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
       child: Card(
         margin: const EdgeInsets.only(bottom: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 2,
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Creator Info Row
-            Row(
-              children: [
-                // Profile Picture and Name - Tappable to view profile
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => UserProfilePage(
-                          userId: widget.project['uid'],
-                        ),
-                      ),
-                    );
-                  },
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 22,
-                        backgroundColor: Colors.deepPurple[100],
-                        backgroundImage: _creatorImageUrl != null
-                            ? NetworkImage(_creatorImageUrl!)
-                            : null,
-                        child: _isLoading
-                            ? SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.deepPurple[300],
-                                ),
-                              )
-                            : _creatorImageUrl == null
-                            ? Icon(
-                                Icons.person,
-                                color: Colors.deepPurple[400],
-                                size: 24,
-                              )
-                            : null,
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        _creatorName.isNotEmpty ? _creatorName : 'Loading...',
-                        style: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Spacer(),
-                // Time ago
-                Text(
-                  _getTimeAgo(widget.project['createdAt'] as Timestamp?),
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // Project Title
-            Text(
-              widget.project['title'] ?? 'Untitled Project',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-
-            // Description
-            Text(
-              widget.project['description'] ?? '',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[700],
-                height: 1.5,
-              ),
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 16),
-
-            // Tech Stack
-            if (techStack.isNotEmpty) ...[
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: techStack.take(5).map((tech) {
-                  return Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.blue[50],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      tech,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.blue[700],
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 12),
-            ],
-
-            // Looking For
-            if (lookingFor.isNotEmpty) ...[
+        elevation: 2,
+        color: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Creator Info Row
               Row(
                 children: [
-                  Icon(
-                    Icons.people_outline,
-                    size: 16,
-                    color: Colors.green[600],
-                  ),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      'Looking for: ${lookingFor.join(", ")}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.green[700],
-                        fontWeight: FontWeight.w500,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                  // Profile Picture and Name - Tappable to view profile
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              UserProfilePage(userId: widget.project['uid']),
+                        ),
+                      );
+                    },
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 22,
+                          backgroundColor: Colors.deepPurple[100],
+                          backgroundImage: _creatorImageUrl != null
+                              ? NetworkImage(_creatorImageUrl!)
+                              : null,
+                          child: _isLoading
+                              ? SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.deepPurple[300],
+                                  ),
+                                )
+                              : _creatorImageUrl == null
+                              ? Icon(
+                                  Icons.person,
+                                  color: Colors.deepPurple[400],
+                                  size: 24,
+                                )
+                              : null,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          _creatorName.isNotEmpty ? _creatorName : 'Loading...',
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
+                  ),
+                  const Spacer(),
+                  // Time ago
+                  Text(
+                    _getTimeAgo(widget.project['createdAt'] as Timestamp?),
+                    style: TextStyle(fontSize: 12, color: Colors.grey[500]),
                   ),
                 ],
               ),
+              const SizedBox(height: 16),
+
+              // Project Title
+              Text(
+                widget.project['title'] ?? 'Untitled Project',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Description
+              Text(
+                widget.project['description'] ?? '',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[700],
+                  height: 1.5,
+                ),
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 16),
+
+              // Tech Stack
+              if (techStack.isNotEmpty) ...[
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: techStack.take(5).map((tech) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.blue[50],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        tech,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.blue[700],
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 12),
+              ],
+
+              // Looking For
+              if (lookingFor.isNotEmpty) ...[
+                Row(
+                  children: [
+                    Icon(
+                      Icons.people_outline,
+                      size: 16,
+                      color: Colors.green[600],
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        'Looking for: ${lookingFor.join(", ")}',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.green[700],
+                          fontWeight: FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
-    ),
     );
   }
 
