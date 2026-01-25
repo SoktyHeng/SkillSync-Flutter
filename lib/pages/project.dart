@@ -49,11 +49,8 @@ class _ProjectPageState extends State<ProjectPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('My Projects'),
-        backgroundColor: Colors.white,
-        elevation: 0,
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8.0),

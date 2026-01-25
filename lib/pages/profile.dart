@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:skillsync_sp2/pages/edit_profile.dart';
+import 'package:skillsync_sp2/pages/settings.dart';
 import 'package:skillsync_sp2/services/user_service.dart';
 import 'package:skillsync_sp2/utils/profile_menu.dart';
 import 'package:skillsync_sp2/utils/profile_pic.dart';
@@ -35,8 +36,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(backgroundColor: Colors.white, title: Text('Profile')),
+      appBar: AppBar(title: const Text('Profile')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(vertical: 20),
         child: Center(
@@ -82,7 +82,18 @@ class _ProfilePageState extends State<ProfilePage> {
                 icon: Icons.notifications,
                 press: () {},
               ),
-              ProfileMenu(text: "Settings", icon: Icons.settings, press: () {}),
+              ProfileMenu(
+                text: "Settings",
+                icon: Icons.settings,
+                press: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const SettingsPage(),
+                    ),
+                  );
+                },
+              ),
               ProfileMenu(text: "Help Center", icon: Icons.help, press: () {}),
               ProfileMenu(
                 text: "Log Out",

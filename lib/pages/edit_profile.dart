@@ -330,11 +330,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
         title: const Text('Edit Profile'),
-        elevation: 0,
       ),
       body: _isLoadingData
           ? Center(
