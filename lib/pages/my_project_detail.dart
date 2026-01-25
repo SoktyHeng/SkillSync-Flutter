@@ -72,7 +72,6 @@ class _MyProjectDetailState extends State<MyProjectDetail>
   @override
   Widget build(BuildContext context) {
     final techStack = List<String>.from(widget.project['techStack'] ?? []);
-    final lookingFor = List<String>.from(widget.project['lookingFor'] ?? []);
     final duration = widget.project['duration'] as String?;
     final description = widget.project['description'] ?? '';
     final title = widget.project['title'] ?? 'Untitled Project';

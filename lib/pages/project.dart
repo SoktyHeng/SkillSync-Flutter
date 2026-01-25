@@ -435,15 +435,16 @@ class _ProjectCardState extends State<_ProjectCard> {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.grey[100],
+                        color: Colors.blue[50],
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: Colors.grey[300]!),
                       ),
                       child: Text(
                         tech,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
+                          color: Colors.blue[700],
                         ),
                       ),
                     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:skillsync_sp2/auth/main_page.dart';
 import 'package:skillsync_sp2/pages/home.dart';
@@ -11,6 +12,15 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+
+  // Set system UI overlay style
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      systemNavigationBarColor: Colors.white,
+      systemNavigationBarIconBrightness: Brightness.dark,
+    ),
+  );
+
   await Firebase.initializeApp();
 
   // Configure Firestore settings
@@ -50,6 +60,19 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return Consumer<ThemeProvider>(
       builder: (context, themeProvider, child) {
+        // Update system UI based on theme
+        SystemChrome.setSystemUIOverlayStyle(
+          SystemUiOverlayStyle(
+            systemNavigationBarColor: themeProvider.themeMode == ThemeMode.dark
+                ? const Color(0xFF1E1E1E)
+                : Colors.white,
+            systemNavigationBarIconBrightness:
+                themeProvider.themeMode == ThemeMode.dark
+                ? Brightness.light
+                : Brightness.dark,
+          ),
+        );
+
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           theme: ThemeData(

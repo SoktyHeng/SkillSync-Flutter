@@ -393,7 +393,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
                     // Major dropdown
                     DropdownButtonFormField<String>(
-                      value: _selectedMajor,
+                      initialValue: _selectedMajor,
                       decoration: _buildInputDecoration(
                         label: 'Major',
                         icon: Icons.school_outlined,
@@ -416,7 +416,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
                     // Year of study dropdown
                     DropdownButtonFormField<String>(
-                      value: _selectedYear,
+                      initialValue: _selectedYear,
                       decoration: _buildInputDecoration(
                         label: 'Year of Study',
                         icon: Icons.calendar_today_outlined,
