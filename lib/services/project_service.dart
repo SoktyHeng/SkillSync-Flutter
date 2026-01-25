@@ -134,4 +134,159 @@ class ProjectService {
       return {'name': 'Unknown User', 'profileImageUrl': null};
     }
   }
+
+  // Send a contribution request
+  Future<void> requestToContribute(String projectId) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('No user logged in');
+    }
+
+    try {
+      // Check if already requested
+      final existingRequest = await _firestore
+          .collection('projects')
+          .doc(projectId)
+          .collection('requests')
+          .where('userId', isEqualTo: user.uid)
+          .get();
+
+      if (existingRequest.docs.isNotEmpty) {
+        throw Exception('You have already requested to contribute');
+      }
+
+      await _firestore
+          .collection('projects')
+          .doc(projectId)
+          .collection('requests')
+          .add({
+        'userId': user.uid,
+        'status': 'pending',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      debugPrint('Contribution request sent successfully');
+    } catch (e) {
+      debugPrint('Error sending contribution request: $e');
+      rethrow;
+    }
+  }
+
+  // Get contribution requests for a project (for owner)
+  Stream<QuerySnapshot> getContributionRequests(String projectId) {
+    return _firestore
+        .collection('projects')
+        .doc(projectId)
+        .collection('requests')
+        .where('status', isEqualTo: 'pending')
+        .snapshots();
+  }
+
+  // Get all contributors (accepted requests) for a project
+  Stream<QuerySnapshot> getContributors(String projectId) {
+    return _firestore
+        .collection('projects')
+        .doc(projectId)
+        .collection('requests')
+        .where('status', isEqualTo: 'accepted')
+        .snapshots();
+  }
+
+  // Accept a contribution request
+  Future<void> acceptContributionRequest(
+      String projectId, String requestId) async {
+    try {
+      await _firestore
+          .collection('projects')
+          .doc(projectId)
+          .collection('requests')
+          .doc(requestId)
+          .update({'status': 'accepted'});
+      debugPrint('Contribution request accepted');
+    } catch (e) {
+      debugPrint('Error accepting request: $e');
+      rethrow;
+    }
+  }
+
+  // Reject a contribution request
+  Future<void> rejectContributionRequest(
+      String projectId, String requestId) async {
+    try {
+      await _firestore
+          .collection('projects')
+          .doc(projectId)
+          .collection('requests')
+          .doc(requestId)
+          .update({'status': 'rejected'});
+      debugPrint('Contribution request rejected');
+    } catch (e) {
+      debugPrint('Error rejecting request: $e');
+      rethrow;
+    }
+  }
+
+  // Check if current user has already requested to contribute
+  Future<String?> getRequestStatus(String projectId) async {
+    final user = _auth.currentUser;
+    if (user == null) return null;
+
+    try {
+      final request = await _firestore
+          .collection('projects')
+          .doc(projectId)
+          .collection('requests')
+          .where('userId', isEqualTo: user.uid)
+          .get();
+
+      if (request.docs.isEmpty) return null;
+      return request.docs.first.data()['status'] as String?;
+    } catch (e) {
+      debugPrint('Error checking request status: $e');
+      return null;
+    }
+  }
+
+  // Get projects where current user is an accepted contributor
+  Future<List<Map<String, dynamic>>> getContributingProjects() async {
+    final user = _auth.currentUser;
+    if (user == null) return [];
+
+    try {
+      // Get all projects
+      final projectsSnapshot = await _firestore.collection('projects').get();
+      List<Map<String, dynamic>> contributingProjects = [];
+
+      for (var projectDoc in projectsSnapshot.docs) {
+        // Check if user is an accepted contributor in this project
+        final requestSnapshot = await _firestore
+            .collection('projects')
+            .doc(projectDoc.id)
+            .collection('requests')
+            .where('userId', isEqualTo: user.uid)
+            .where('status', isEqualTo: 'accepted')
+            .get();
+
+        if (requestSnapshot.docs.isNotEmpty) {
+          final projectData = projectDoc.data();
+          projectData['projectId'] = projectDoc.id;
+          contributingProjects.add(projectData);
+        }
+      }
+
+      // Sort by createdAt descending
+      contributingProjects.sort((a, b) {
+        final aTime = a['createdAt'] as Timestamp?;
+        final bTime = b['createdAt'] as Timestamp?;
+        if (aTime == null && bTime == null) return 0;
+        if (aTime == null) return 1;
+        if (bTime == null) return -1;
+        return bTime.compareTo(aTime);
+      });
+
+      return contributingProjects;
+    } catch (e) {
+      debugPrint('Error getting contributing projects: $e');
+      return [];
+    }
+  }
 }

@@ -6,11 +6,8 @@ class MessagePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Messages'),
-        backgroundColor: Colors.deepPurple[200],
-        foregroundColor: Colors.white,
       ),
       body: const Center(
         child: Text('This is the Messages Page'),

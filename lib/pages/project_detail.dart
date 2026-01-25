@@ -22,11 +22,14 @@ class _ProjectDetailState extends State<ProjectDetail> {
   String _creatorName = '';
   String? _creatorImageUrl;
   bool _isLoading = true;
+  String? _requestStatus;
+  bool _isRequesting = false;
 
   @override
   void initState() {
     super.initState();
     _loadCreatorInfo();
+    _loadRequestStatus();
   }
 
   Future<void> _loadCreatorInfo() async {
@@ -36,6 +39,15 @@ class _ProjectDetailState extends State<ProjectDetail> {
         _creatorName = userInfo['name'] ?? 'Unknown User';
         _creatorImageUrl = userInfo['profileImageUrl'];
         _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadRequestStatus() async {
+    final status = await _projectService.getRequestStatus(widget.projectId);
+    if (mounted) {
+      setState(() {
+        _requestStatus = status;
       });
     }
   }
@@ -59,6 +71,45 @@ class _ProjectDetailState extends State<ProjectDetail> {
     }
   }
 
+  Future<void> _sendContributeRequest() async {
+    setState(() {
+      _isRequesting = true;
+    });
+
+    try {
+      await _projectService.requestToContribute(widget.projectId);
+      if (mounted) {
+        setState(() {
+          _requestStatus = 'pending';
+          _isRequesting = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Request sent successfully!'),
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isRequesting = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceAll('Exception: ', '')),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.red,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    }
+  }
+
   void _showContributeDialog() {
     showDialog(
       context: context,
@@ -66,14 +117,148 @@ class _ProjectDetailState extends State<ProjectDetail> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Request to Contribute'),
         content: const Text(
-          'This feature is coming soon! You will be able to send a request to the project owner to join their team.',
+          'Would you like to send a request to join this project? The project owner will review your request.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _sendContributeRequest();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.deepPurple[500],
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Send Request'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildContributeButton() {
+    if (_isRequesting) {
+      return ElevatedButton(
+        onPressed: null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.deepPurple[300],
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 0,
+        ),
+        child: const SizedBox(
+          height: 20,
+          width: 20,
+          child: CircularProgressIndicator(
+            color: Colors.white,
+            strokeWidth: 2,
+          ),
+        ),
+      );
+    }
+
+    if (_requestStatus == 'pending') {
+      return ElevatedButton(
+        onPressed: null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.orange[400],
+          disabledBackgroundColor: Colors.orange[400],
+          disabledForegroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 0,
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.hourglass_empty, size: 20),
+            SizedBox(width: 8),
+            Text(
+              'Request Pending',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_requestStatus == 'accepted') {
+      return ElevatedButton(
+        onPressed: null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.green[500],
+          disabledBackgroundColor: Colors.green[500],
+          disabledForegroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 0,
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.check_circle, size: 20),
+            SizedBox(width: 8),
+            Text(
+              'You\'re a Contributor',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_requestStatus == 'rejected') {
+      return ElevatedButton(
+        onPressed: null,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.grey[400],
+          disabledBackgroundColor: Colors.grey[400],
+          disabledForegroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          elevation: 0,
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.block, size: 20),
+            SizedBox(width: 8),
+            Text(
+              'Request Declined',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ElevatedButton(
+      onPressed: _showContributeDialog,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.deepPurple[500],
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 0,
+      ),
+      child: const Text(
+        'Contribute',
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -330,7 +515,7 @@ class _ProjectDetailState extends State<ProjectDetail> {
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).scaffoldBackgroundColor,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.05),
@@ -342,22 +527,7 @@ class _ProjectDetailState extends State<ProjectDetail> {
         child: SafeArea(
           child: SizedBox(
             width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _showContributeDialog,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple[500],
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 0,
-              ),
-              child: Text(
-                'Contribute ',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-            ),
+            child: _buildContributeButton(),
           ),
         ),
       ),
