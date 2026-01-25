@@ -18,6 +18,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   bool _isLoading = false;
   bool _isLoadingData = true;
 
+  String? _userEmail;
   String? _selectedMajor;
   String? _selectedYear;
   final List<String> _selectedSkills = [];
@@ -79,6 +80,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       final userData = await _userService.getUserProfile();
       if (userData != null && mounted) {
         setState(() {
+          _userEmail = userData['email'];
           _nameController.text = userData['name'] ?? '';
           _phoneController.text = userData['phoneNumber'] ?? '';
           _githubController.text = userData['githubUrl'] ?? '';
@@ -344,6 +346,27 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const SizedBox(height: 20),
+
+                    // Email field (read-only)
+                    TextField(
+                      controller: TextEditingController(text: _userEmail ?? ''),
+                      readOnly: true,
+                      enabled: false,
+                      decoration: InputDecoration(
+                        labelText: 'Email',
+                        prefixIcon: const Icon(Icons.email_outlined),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                        ),
+                        disabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12.0),
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey[100],
+                      ),
+                    ),
                     const SizedBox(height: 20),
 
                     // Name field
