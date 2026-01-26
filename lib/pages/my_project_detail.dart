@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:skillsync_sp2/pages/project_edit.dart';
 import 'package:skillsync_sp2/pages/user_profile.dart';
 import 'package:skillsync_sp2/services/project_service.dart';
 
@@ -21,11 +22,13 @@ class _MyProjectDetailState extends State<MyProjectDetail>
     with SingleTickerProviderStateMixin {
   final ProjectService _projectService = ProjectService();
   late TabController _tabController;
+  late Map<String, dynamic> _project;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    _project = Map<String, dynamic>.from(widget.project);
   }
 
   @override
@@ -69,18 +72,133 @@ class _MyProjectDetailState extends State<MyProjectDetail>
     }
   }
 
+  Future<void> _openEditPage() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            ProjectEdit(projectId: widget.projectId, project: _project),
+      ),
+    );
+
+    if (result == true) {
+      // Refresh project data after edit
+      _refreshProjectData();
+    }
+  }
+
+  Future<void> _refreshProjectData() async {
+    try {
+      final doc = await _projectService.getProjectById(widget.projectId);
+      if (doc != null && mounted) {
+        setState(() {
+          _project = doc;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error refreshing project: $e');
+    }
+  }
+
+  void _showDeleteConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          title: const Text('Delete Project'),
+          content: const Text(
+            'Are you sure you want to delete this project? This action cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                try {
+                  await _projectService.deleteProject(widget.projectId);
+                  if (mounted) {
+                    _showSnackBar('Project deleted successfully');
+                    Navigator.pop(context);
+                  }
+                } catch (e) {
+                  _showSnackBar(
+                    'Error deleting project: ${e.toString()}',
+                    isError: true,
+                  );
+                }
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final techStack = List<String>.from(widget.project['techStack'] ?? []);
-    final duration = widget.project['duration'] as String?;
-    final description = widget.project['description'] ?? '';
-    final title = widget.project['title'] ?? 'Untitled Project';
+    final techStack = List<String>.from(_project['techStack'] ?? []);
+    final duration = _project['duration'] as String?;
+    final description = _project['description'] ?? '';
+    final title = _project['title'] ?? 'Untitled Project';
 
     return Scaffold(
       backgroundColor: Theme.of(context).brightness == Brightness.dark
           ? null
           : Colors.grey[50],
-      appBar: AppBar(title: const Text('Project Details')),
+      appBar: AppBar(
+        title: const Text('Project Details'),
+        actions: [
+          PopupMenuButton<String>(
+            color: Colors.white,
+            icon: Icon(Icons.more_vert, color: Colors.grey[700]),
+            onSelected: (value) {
+              if (value == 'edit') {
+                _openEditPage();
+              } else if (value == 'delete') {
+                _showDeleteConfirmation();
+              }
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'edit',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.edit_outlined,
+                      color: Colors.deepPurple[500],
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    const Text('Edit'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.delete_outline,
+                      color: Colors.red[400],
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    const Text('Delete', style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
       body: Column(
         children: [
           // Project Info Section
@@ -357,8 +475,9 @@ class _RequestCardState extends State<_RequestCard> {
         leading: CircleAvatar(
           radius: 24,
           backgroundColor: Colors.deepPurple[100],
-          backgroundImage:
-              _userImageUrl != null ? NetworkImage(_userImageUrl!) : null,
+          backgroundImage: _userImageUrl != null
+              ? NetworkImage(_userImageUrl!)
+              : null,
           child: _isLoading
               ? SizedBox(
                   width: 18,
@@ -369,8 +488,8 @@ class _RequestCardState extends State<_RequestCard> {
                   ),
                 )
               : _userImageUrl == null
-                  ? Icon(Icons.person, color: Colors.deepPurple[400], size: 24)
-                  : null,
+              ? Icon(Icons.person, color: Colors.deepPurple[400], size: 24)
+              : null,
         ),
         title: Text(
           _userName,

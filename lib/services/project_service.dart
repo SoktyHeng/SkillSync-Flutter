@@ -50,6 +50,20 @@ class ProjectService {
         .snapshots();
   }
 
+  // Get a single project by ID
+  Future<Map<String, dynamic>?> getProjectById(String projectId) async {
+    try {
+      final doc = await _firestore.collection('projects').doc(projectId).get();
+      if (doc.exists) {
+        return doc.data();
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error getting project: $e');
+      return null;
+    }
+  }
+
   // Get projects by current user
   Stream<QuerySnapshot> getMyProjects() {
     final user = _auth.currentUser;
