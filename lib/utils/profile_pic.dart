@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:image_picker/image_picker.dart';
@@ -44,6 +43,7 @@ class _ProfilePicState extends State<ProfilePic> {
 
   Future<void> _pickImage() async {
     showModalBottomSheet(
+      backgroundColor: Colors.white,
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -65,10 +65,7 @@ class _ProfilePicState extends State<ProfilePic> {
               const SizedBox(height: 20),
               const Text(
                 'Select Photo',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
               ListTile(
@@ -80,7 +77,10 @@ class _ProfilePicState extends State<ProfilePic> {
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.photo_library, color: Colors.deepPurple),
+                leading: const Icon(
+                  Icons.photo_library,
+                  color: Colors.deepPurple,
+                ),
                 title: const Text('Choose from gallery'),
                 onTap: () {
                   Navigator.pop(context);
@@ -170,7 +170,9 @@ class _ProfilePicState extends State<ProfilePic> {
     } else if (_profileImageUrl != null && _profileImageUrl!.isNotEmpty) {
       return NetworkImage(_profileImageUrl!);
     } else {
-      return const NetworkImage("https://i.postimg.cc/0jqKB6mS/Profile-Image.png");
+      return const NetworkImage(
+        "https://i.postimg.cc/0jqKB6mS/Profile-Image.png",
+      );
     }
   }
 

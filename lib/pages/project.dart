@@ -520,75 +520,57 @@ class _ProjectCardState extends State<_ProjectCard> {
 
               const Divider(height: 32),
 
-              // Footer with action button
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  if (widget.isOwner)
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.people,
-                          size: 18,
-                          color: Colors.deepPurple[400],
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '$_contributorCount contributor${_contributorCount == 1 ? '' : 's'}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    )
-                  else if (widget.isContributor)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.green[50],
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.green[300]!),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.check_circle,
-                            size: 16,
-                            color: Colors.green[600],
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            'Contributor',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.green[700],
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  else
-                    const SizedBox(),
-                  if (widget.isOwner && widget.onDelete != null)
-                    IconButton(
-                      onPressed: widget.onDelete,
-                      icon: Icon(
-                        Icons.delete_outline,
-                        color: Colors.red[400],
-                        size: 20,
-                      ),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+              // Footer with contributor info
+              if (widget.isOwner)
+                Row(
+                  children: [
+                    Icon(
+                      Icons.people,
+                      size: 18,
+                      color: Colors.deepPurple[400],
                     ),
-                ],
-              ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '$_contributorCount contributor${_contributorCount == 1 ? '' : 's'}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                )
+              else if (widget.isContributor)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.green[50],
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.green[300]!),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.check_circle,
+                        size: 16,
+                        color: Colors.green[600],
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Contributor',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.green[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
             ],
           ),
         ),
