@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:skillsync_sp2/pages/chat_page.dart';
+import 'package:skillsync_sp2/services/chat_service.dart';
 import 'package:skillsync_sp2/services/rating_service.dart';
 import 'package:skillsync_sp2/services/user_service.dart';
 import 'package:skillsync_sp2/widgets/rating_dialog.dart';
@@ -20,6 +22,7 @@ class UserProfilePage extends StatefulWidget {
 class _UserProfilePageState extends State<UserProfilePage> {
   final UserService _userService = UserService();
   final RatingService _ratingService = RatingService();
+  final ChatService _chatService = ChatService();
 
   Map<String, dynamic>? _userData;
   bool _isLoading = true;
@@ -87,6 +90,59 @@ class _UserProfilePageState extends State<UserProfilePage> {
     }
   }
 
+  Future<void> _openChat() async {
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      final conversationId =
+          await _chatService.getOrCreateConversation(widget.userId);
+
+      if (mounted) {
+        Navigator.pop(context);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatPage(
+              conversationId: conversationId,
+              otherUserId: widget.userId,
+              otherUserName: _userData?['name'] ?? 'User',
+              otherUserImageUrl: _userData?['profileImageUrl'],
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        String errorMessage = 'Unable to start chat. Please try again.';
+        if (e.toString().contains('timeout') ||
+            e.toString().contains('unavailable')) {
+          errorMessage = 'Connection issue. Please check your internet and try again.';
+        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red[400],
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: _openChat,
+            ),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -95,6 +151,14 @@ class _UserProfilePageState extends State<UserProfilePage> {
         backgroundColor: Colors.white,
         title: const Text('Profile'),
         elevation: 0,
+        actions: [
+          if (!_isOwnProfile && !_isLoading && _userData != null)
+            IconButton(
+              icon: Icon(Icons.message_outlined, color: Colors.deepPurple[500]),
+              onPressed: _openChat,
+              tooltip: 'Send Message',
+            ),
+        ],
       ),
       body: _isLoading
           ? Center(
