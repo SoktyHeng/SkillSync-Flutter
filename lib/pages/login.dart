@@ -95,8 +95,10 @@ class _LoginPageState extends State<LoginPage> {
       microsoftProvider.addScope('profile');
 
       // Set tenant for organization-only accounts
+      // prompt: 'select_account' forces the account picker to show every time
       microsoftProvider.setCustomParameters({
         'tenant': 'c1f3dc23-b7f8-48d3-9b5d-2b12f158f01f',
+        'prompt': 'select_account',
       });
 
       await FirebaseAuth.instance.signInWithProvider(microsoftProvider);
