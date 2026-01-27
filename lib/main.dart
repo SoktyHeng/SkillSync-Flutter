@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:skillsync_sp2/auth/main_page.dart';
-import 'package:skillsync_sp2/pages/home.dart';
+import 'package:skillsync_sp2/pages/navigation_bar.dart';
 import 'package:skillsync_sp2/pages/setup_info.dart';
 import 'package:skillsync_sp2/providers/theme_provider.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -108,7 +108,7 @@ class _MyAppState extends State<MyApp> {
           themeMode: themeProvider.themeMode,
           home: MainPage(),
           routes: {
-            '/home': (context) => const HomePage(),
+            '/home': (context) => const NavigationPage(),
             '/setup': (context) => const SetupInfoPage(),
           },
         );
