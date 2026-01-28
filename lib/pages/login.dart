@@ -88,6 +88,29 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  Future signInWithMicrosoft() async {
+    try {
+      final microsoftProvider = MicrosoftAuthProvider();
+      microsoftProvider.addScope('email');
+      microsoftProvider.addScope('profile');
+
+      // Set tenant and force account picker
+      microsoftProvider.setCustomParameters({
+        'tenant': 'c1f3dc23-b7f8-48d3-9b5d-2b12f158f01f',
+        // 'prompt': 'select_account',
+      });
+
+      await FirebaseAuth.instance.signInWithProvider(microsoftProvider);
+      await checkUserSetupAndNavigate();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Microsoft sign-in failed: ${e.toString()}')),
+        );
+      }
+    }
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -275,23 +298,50 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Continue with Google button
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.grey[300]!, width: 2),
-                      color: Colors.white,
-                    ),
-                    child: IconButton(
-                      onPressed: signInWithGoogle,
-                      icon: Image.asset(
-                        'assets/google.png',
-                        width: 30,
-                        height: 30,
+                  // Social sign-in buttons
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Google button
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border:
+                              Border.all(color: Colors.grey[300]!, width: 2),
+                          color: Colors.white,
+                        ),
+                        child: IconButton(
+                          onPressed: signInWithGoogle,
+                          icon: Image.asset(
+                            'assets/google.png',
+                            width: 30,
+                            height: 30,
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 20),
+                      // Microsoft button
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border:
+                              Border.all(color: Colors.grey[300]!, width: 2),
+                          color: Colors.white,
+                        ),
+                        child: IconButton(
+                          onPressed: signInWithMicrosoft,
+                          icon: Icon(
+                            Icons.window,
+                            size: 30,
+                            color: Colors.blue[600],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 24),
 
