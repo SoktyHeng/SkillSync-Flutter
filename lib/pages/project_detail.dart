@@ -24,6 +24,7 @@ class _ProjectDetailState extends State<ProjectDetail> {
   bool _isLoading = true;
   String? _requestStatus;
   bool _isRequesting = false;
+  bool _didRequestThisSession = false;
 
   @override
   void initState() {
@@ -82,6 +83,7 @@ class _ProjectDetailState extends State<ProjectDetail> {
         setState(() {
           _requestStatus = 'pending';
           _isRequesting = false;
+          _didRequestThisSession = true;
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -271,14 +273,20 @@ class _ProjectDetailState extends State<ProjectDetail> {
     final description = widget.project['description'] ?? '';
     final title = widget.project['title'] ?? 'Untitled Project';
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Project Details'),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        Navigator.pop(context, _didRequestThisSession);
+      },
+      child: Scaffold(
         backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 0,
-      ),
+        appBar: AppBar(
+          title: const Text('Project Details'),
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black,
+          elevation: 0,
+        ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -531,6 +539,7 @@ class _ProjectDetailState extends State<ProjectDetail> {
           ),
         ),
       ),
+    ),
     );
   }
 }
