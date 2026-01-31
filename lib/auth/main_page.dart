@@ -4,9 +4,17 @@ import 'package:flutter/material.dart';
 import 'package:skillsync_sp2/auth/auth_page.dart';
 import 'package:skillsync_sp2/pages/setup_info.dart';
 import 'package:skillsync_sp2/pages/navigation_bar.dart';
+import 'package:skillsync_sp2/services/notification_service.dart';
 
-class MainPage extends StatelessWidget {
+class MainPage extends StatefulWidget {
   const MainPage({super.key});
+
+  @override
+  State<MainPage> createState() => _MainPageState();
+}
+
+class _MainPageState extends State<MainPage> {
+  bool _notificationInitialized = false;
 
   Future<bool> _checkHasCompletedSetup(String uid) async {
     final doc = await FirebaseFirestore.instance
@@ -14,6 +22,13 @@ class MainPage extends StatelessWidget {
         .doc(uid)
         .get();
     return doc.exists && doc.data()?['hasCompletedSetup'] == true;
+  }
+
+  void _initializeNotifications() {
+    if (!_notificationInitialized) {
+      _notificationInitialized = true;
+      NotificationService().requestPermissionAndSaveToken();
+    }
   }
 
   @override
@@ -24,6 +39,10 @@ class MainPage extends StatelessWidget {
         builder: (context, snapshot) {
           if (snapshot.hasData) {
             final user = snapshot.data!;
+            // Initialize notifications when user is authenticated
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _initializeNotifications();
+            });
             return FutureBuilder<bool>(
               future: _checkHasCompletedSetup(user.uid),
               builder: (context, setupSnapshot) {
@@ -37,6 +56,7 @@ class MainPage extends StatelessWidget {
               },
             );
           } else {
+            _notificationInitialized = false;
             return const AuthPage();
           }
         },

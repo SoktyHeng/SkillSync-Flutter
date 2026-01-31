@@ -7,7 +7,9 @@ import 'package:skillsync_sp2/pages/setup_info.dart';
 import 'package:skillsync_sp2/providers/theme_provider.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:skillsync_sp2/services/notification_service.dart';
 
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +24,12 @@ void main() async {
   );
 
   await Firebase.initializeApp();
+
+  // Register FCM background message handler
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  // Initialize notification service
+  await NotificationService().initialize();
 
   // Configure Firestore settings
   FirebaseFirestore.instance.settings = const Settings(
