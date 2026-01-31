@@ -15,6 +15,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final ProjectService _projectService = ProjectService();
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
   String _selectedDuration = 'All';
 
   final List<String> _durationFilters = [
@@ -25,6 +27,36 @@ class _HomePageState extends State<HomePage> {
     '1-3 months',
     '3+ months',
   ];
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  bool _matchesSearchQuery(Map<String, dynamic> project) {
+    if (_searchQuery.isEmpty) return true;
+
+    final query = _searchQuery.toLowerCase();
+    final title = (project['title'] as String? ?? '').toLowerCase();
+    final techStack = List<String>.from(project['techStack'] ?? []);
+    final lookingFor = List<String>.from(project['lookingFor'] ?? []);
+
+    // Check title
+    if (title.contains(query)) return true;
+
+    // Check tech stack
+    for (final tech in techStack) {
+      if (tech.toLowerCase().contains(query)) return true;
+    }
+
+    // Check looking for roles
+    for (final role in lookingFor) {
+      if (role.toLowerCase().contains(query)) return true;
+    }
+
+    return false;
+  }
 
   bool _matchesDurationFilter(String? durationString) {
     if (_selectedDuration == 'All') return true;
@@ -68,6 +100,50 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(title: const Text('Discover Projects')),
       body: Column(
         children: [
+          // Search Bar
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value;
+                });
+              },
+              decoration: InputDecoration(
+                hintText: 'Search by title, tech stack, or role...',
+                hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
+                prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(Icons.clear, color: Colors.grey[500]),
+                        onPressed: () {
+                          setState(() {
+                            _searchController.clear();
+                            _searchQuery = '';
+                          });
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: isDark ? Colors.grey[800] : Colors.grey[100],
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.deepPurple[300]!, width: 1.5),
+                ),
+              ),
+            ),
+          ),
+
           // Duration Filter Bar
           Container(
             padding: const EdgeInsets.symmetric(vertical: 12),
@@ -134,12 +210,15 @@ class _HomePageState extends State<HomePage> {
                 final allProjects = snapshot.data?.docs ?? [];
                 final currentUserId = FirebaseAuth.instance.currentUser?.uid;
 
-                // Filter out current user's projects and apply duration filter
+                // Filter out current user's projects and apply filters
                 final projects = allProjects.where((doc) {
                   final data = doc.data() as Map<String, dynamic>;
 
                   // Exclude current user's projects
                   if (data['uid'] == currentUserId) return false;
+
+                  // Apply search filter
+                  if (!_matchesSearchQuery(data)) return false;
 
                   // Apply duration filter
                   if (_selectedDuration != 'All') {
@@ -153,6 +232,20 @@ class _HomePageState extends State<HomePage> {
                 }).toList();
 
                 if (projects.isEmpty) {
+                  String emptyMessage;
+                  String emptySubtitle;
+
+                  if (_searchQuery.isNotEmpty) {
+                    emptyMessage = 'No projects found for "$_searchQuery"';
+                    emptySubtitle = 'Try a different search term';
+                  } else if (_selectedDuration != 'All') {
+                    emptyMessage = 'No projects with $_selectedDuration duration';
+                    emptySubtitle = 'Try a different duration filter';
+                  } else {
+                    emptyMessage = 'No projects yet';
+                    emptySubtitle = 'Check back later for new projects!';
+                  }
+
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -163,19 +256,21 @@ class _HomePageState extends State<HomePage> {
                           color: Colors.grey[400],
                         ),
                         const SizedBox(height: 16),
-                        Text(
-                          _selectedDuration == 'All'
-                              ? 'No projects yet'
-                              : 'No projects with $_selectedDuration duration',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey[600],
-                            fontWeight: FontWeight.w500,
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 32),
+                          child: Text(
+                            emptyMessage,
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey[600],
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.center,
                           ),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Check back later for new projects!',
+                          emptySubtitle,
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey[500],
