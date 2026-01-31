@@ -229,12 +229,23 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
   String? _creatorImageUrl;
   bool _isLoading = true;
   int _contributorCount = 0;
+  String? _userRequestStatus;
 
   @override
   void initState() {
     super.initState();
     _loadCreatorInfo();
     _loadContributorCount();
+    _loadUserRequestStatus();
+  }
+
+  Future<void> _loadUserRequestStatus() async {
+    final status = await widget.projectService.getRequestStatus(widget.projectId);
+    if (mounted) {
+      setState(() {
+        _userRequestStatus = status;
+      });
+    }
   }
 
   Future<void> _loadCreatorInfo() async {
@@ -267,8 +278,8 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
     final lookingFor = List<String>.from(widget.project['lookingFor'] ?? []);
 
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        final result = await Navigator.push<bool>(
           context,
           MaterialPageRoute(
             builder: (context) => ProjectDetail(
@@ -277,6 +288,12 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
             ),
           ),
         );
+        // Refresh status when returning from project detail
+        if (mounted && result == true) {
+          setState(() {
+            _userRequestStatus = 'pending';
+          });
+        }
       },
       child: Card(
         margin: const EdgeInsets.only(bottom: 16),
@@ -339,6 +356,22 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
                     ),
                   ),
                   const Spacer(),
+                  // Status icon
+                  if (_userRequestStatus == 'pending') ...[
+                    Icon(
+                      Icons.hourglass_top,
+                      size: 18,
+                      color: Colors.orange[600],
+                    ),
+                    const SizedBox(width: 8),
+                  ] else if (_userRequestStatus == 'accepted') ...[
+                    Icon(
+                      Icons.check_circle,
+                      size: 18,
+                      color: Colors.green[600],
+                    ),
+                    const SizedBox(width: 8),
+                  ],
                   // Time ago
                   Text(
                     _getTimeAgo(widget.project['createdAt'] as Timestamp?),

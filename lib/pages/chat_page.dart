@@ -80,16 +80,73 @@ class _ChatPageState extends State<ChatPage> {
   String _formatTime(Timestamp? timestamp) {
     if (timestamp == null) return '';
     final date = timestamp.toDate();
-    final now = DateTime.now();
-    final isToday = date.day == now.day &&
-        date.month == now.month &&
-        date.year == now.year;
+    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  }
 
-    if (isToday) {
-      return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  String _getDateLabel(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final messageDate = DateTime(date.year, date.month, date.day);
+    final difference = today.difference(messageDate).inDays;
+
+    if (difference == 0) {
+      return 'Today';
+    } else if (difference == 1) {
+      return 'Yesterday';
+    } else if (difference < 7) {
+      const weekdays = [
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+        'Friday',
+        'Saturday',
+        'Sunday'
+      ];
+      return weekdays[date.weekday - 1];
     } else {
-      return '${date.day}/${date.month} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+      return '${date.day}/${date.month}';
     }
+  }
+
+  bool _shouldShowDateHeader(List<QueryDocumentSnapshot> messages, int index) {
+    if (index == 0) return true;
+
+    final currentData = messages[index].data() as Map<String, dynamic>;
+    final previousData = messages[index - 1].data() as Map<String, dynamic>;
+
+    final currentTime = currentData['createdAt'] as Timestamp?;
+    final previousTime = previousData['createdAt'] as Timestamp?;
+
+    if (currentTime == null) return false;
+    if (previousTime == null) return true;
+
+    final currentDate = currentTime.toDate();
+    final previousDate = previousTime.toDate();
+
+    return DateTime(currentDate.year, currentDate.month, currentDate.day) !=
+        DateTime(previousDate.year, previousDate.month, previousDate.day);
+  }
+
+  Widget _buildDateHeader(String label) {
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: Colors.grey[600],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -192,7 +249,20 @@ class _ChatPageState extends State<ChatPage> {
                     final message =
                         messages[index].data() as Map<String, dynamic>;
                     final isMe = message['senderId'] == currentUserId;
-                    return _buildMessageBubble(message, isMe);
+                    final showDateHeader =
+                        _shouldShowDateHeader(messages, index);
+                    final timestamp = message['createdAt'] as Timestamp?;
+                    final dateLabel = timestamp != null
+                        ? _getDateLabel(timestamp.toDate())
+                        : '';
+
+                    return Column(
+                      children: [
+                        if (showDateHeader && dateLabel.isNotEmpty)
+                          _buildDateHeader(dateLabel),
+                        _buildMessageBubble(message, isMe),
+                      ],
+                    );
                   },
                 );
               },
