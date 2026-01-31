@@ -12,6 +12,14 @@ class MessagePage extends StatefulWidget {
 
 class _MessagePageState extends State<MessagePage> {
   final ChatService _chatService = ChatService();
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +30,47 @@ class _MessagePageState extends State<MessagePage> {
         backgroundColor: Colors.white,
         elevation: 0,
       ),
-      body: StreamBuilder<QuerySnapshot>(
+      body: Column(
+        children: [
+          // Search Bar
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            color: Colors.white,
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value.toLowerCase();
+                });
+              },
+              decoration: InputDecoration(
+                hintText: 'Search users...',
+                hintStyle: TextStyle(color: Colors.grey[500]),
+                prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(Icons.clear, color: Colors.grey[500]),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {
+                            _searchQuery = '';
+                          });
+                        },
+                      )
+                    : null,
+                filled: true,
+                fillColor: Colors.grey[100],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
+          ),
+          // Conversations List
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
         stream: _chatService.getConversations(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -107,10 +155,14 @@ class _MessagePageState extends State<MessagePage> {
                 conversationId: conversation.id,
                 conversationData: conversation.data() as Map<String, dynamic>,
                 chatService: _chatService,
+                searchQuery: _searchQuery,
               );
             },
           );
         },
+      ),
+          ),
+        ],
       ),
     );
   }
@@ -120,11 +172,13 @@ class _ConversationTile extends StatefulWidget {
   final String conversationId;
   final Map<String, dynamic> conversationData;
   final ChatService chatService;
+  final String searchQuery;
 
   const _ConversationTile({
     required this.conversationId,
     required this.conversationData,
     required this.chatService,
+    required this.searchQuery,
   });
 
   @override
@@ -177,6 +231,12 @@ class _ConversationTileState extends State<_ConversationTile> {
 
   @override
   Widget build(BuildContext context) {
+    // Filter by search query
+    if (widget.searchQuery.isNotEmpty &&
+        !_otherUserName.toLowerCase().contains(widget.searchQuery)) {
+      return const SizedBox.shrink();
+    }
+
     final lastMessage = widget.conversationData['lastMessage'] ?? '';
     final lastMessageTime =
         widget.conversationData['lastMessageTime'] as Timestamp?;
