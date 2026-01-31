@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:skillsync_sp2/pages/user_profile.dart';
 import 'package:skillsync_sp2/services/chat_service.dart';
+import 'package:skillsync_sp2/services/notification_service.dart';
 
 class ChatPage extends StatefulWidget {
   final String conversationId;
@@ -29,7 +30,16 @@ class _ChatPageState extends State<ChatPage> {
   bool _isSending = false;
 
   @override
+  void initState() {
+    super.initState();
+    // Mark this conversation as active to suppress notifications
+    NotificationService().setActiveConversation(widget.conversationId);
+  }
+
+  @override
   void dispose() {
+    // Clear active conversation when leaving
+    NotificationService().clearActiveConversation();
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
