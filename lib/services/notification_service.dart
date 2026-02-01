@@ -28,12 +28,21 @@ class NotificationService {
   // Track active conversation to suppress notifications
   String? _activeConversationId;
 
-  // Notification channel for Android
+  // Notification channel for Android - Chat
   static const AndroidNotificationChannel _chatChannel =
       AndroidNotificationChannel(
     'chat_messages',
     'Chat Messages',
     description: 'Notifications for new chat messages',
+    importance: Importance.high,
+  );
+
+  // Notification channel for Android - Project
+  static const AndroidNotificationChannel _projectChannel =
+      AndroidNotificationChannel(
+    'project_notifications',
+    'Project Notifications',
+    description: 'Notifications for project requests',
     importance: Importance.high,
   );
 
@@ -95,11 +104,12 @@ class NotificationService {
       onDidReceiveNotificationResponse: _onLocalNotificationTap,
     );
 
-    // Create notification channel on Android
+    // Create notification channels on Android
     final androidPlugin =
         _localNotifications.resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>();
     await androidPlugin?.createNotificationChannel(_chatChannel);
+    await androidPlugin?.createNotificationChannel(_projectChannel);
   }
 
   /// Get current FCM token
@@ -195,27 +205,42 @@ class NotificationService {
   void _onForegroundMessage(RemoteMessage message) {
     debugPrint('Foreground message: ${message.notification?.title}');
 
+    final messageType = message.data['type'] as String?;
+
     // Check if this is a chat message for the currently open conversation
-    final conversationId = message.data['conversationId'];
-    if (conversationId != null && conversationId == _activeConversationId) {
-      // Don't show notification if user is viewing this conversation
-      return;
+    if (messageType == 'chat_message') {
+      final conversationId = message.data['conversationId'];
+      if (conversationId != null && conversationId == _activeConversationId) {
+        // Don't show notification if user is viewing this conversation
+        return;
+      }
     }
+
+    // Determine which channel to use based on message type
+    final isProjectNotification = messageType == 'request_received' ||
+        messageType == 'request_accepted' ||
+        messageType == 'request_rejected';
+    final channel = isProjectNotification ? _projectChannel : _chatChannel;
 
     // Show local notification
     final notification = message.notification;
     final android = message.notification?.android;
 
     if (notification != null) {
+      // Build payload based on type
+      final payload = isProjectNotification
+          ? message.data['projectId']
+          : message.data['conversationId'];
+
       _localNotifications.show(
         id: notification.hashCode,
         title: notification.title,
         body: notification.body,
         notificationDetails: NotificationDetails(
           android: AndroidNotificationDetails(
-            _chatChannel.id,
-            _chatChannel.name,
-            channelDescription: _chatChannel.description,
+            channel.id,
+            channel.name,
+            channelDescription: channel.description,
             icon: android?.smallIcon ?? '@mipmap/ic_launcher',
             importance: Importance.high,
             priority: Priority.high,
@@ -226,7 +251,7 @@ class NotificationService {
             presentSound: true,
           ),
         ),
-        payload: conversationId,
+        payload: payload,
       );
     }
   }
@@ -248,6 +273,98 @@ class NotificationService {
     if (conversationId != null) {
       debugPrint('Local notification tapped, conversationId: $conversationId');
       // Navigate to chat page
+    }
+  }
+
+  /// Get notifications stream for current user
+  Stream<List<QueryDocumentSnapshot>> getNotifications() {
+    final user = _auth.currentUser;
+    if (user == null) {
+      return const Stream.empty();
+    }
+
+    return _firestore
+        .collection('notifications')
+        .where('userId', isEqualTo: user.uid)
+        .snapshots()
+        .map((snapshot) {
+      final docs = snapshot.docs;
+      // Sort client-side to avoid composite index requirement
+      docs.sort((a, b) {
+        final aTime = a.data()['createdAt'] as Timestamp?;
+        final bTime = b.data()['createdAt'] as Timestamp?;
+        if (aTime == null && bTime == null) return 0;
+        if (aTime == null) return 1;
+        if (bTime == null) return -1;
+        return bTime.compareTo(aTime); // descending
+      });
+      return docs;
+    });
+  }
+
+  /// Get unread notifications count stream
+  Stream<int> getUnreadCount() {
+    final user = _auth.currentUser;
+    if (user == null) {
+      return Stream.value(0);
+    }
+
+    return _firestore
+        .collection('notifications')
+        .where('userId', isEqualTo: user.uid)
+        .snapshots()
+        .map((snapshot) {
+      // Filter client-side to avoid composite index requirement
+      return snapshot.docs
+          .where((doc) => doc.data()['isRead'] != true)
+          .length;
+    });
+  }
+
+  /// Mark a notification as read
+  Future<void> markAsRead(String notificationId) async {
+    try {
+      await _firestore.collection('notifications').doc(notificationId).update({
+        'isRead': true,
+      });
+    } catch (e) {
+      debugPrint('Error marking notification as read: $e');
+    }
+  }
+
+  /// Mark all notifications as read
+  Future<void> markAllAsRead() async {
+    final user = _auth.currentUser;
+    if (user == null) return;
+
+    try {
+      final batch = _firestore.batch();
+      final allDocs = await _firestore
+          .collection('notifications')
+          .where('userId', isEqualTo: user.uid)
+          .get();
+
+      // Filter client-side to avoid composite index requirement
+      final unreadDocs =
+          allDocs.docs.where((doc) => doc.data()['isRead'] != true);
+
+      for (var doc in unreadDocs) {
+        batch.update(doc.reference, {'isRead': true});
+      }
+
+      await batch.commit();
+      debugPrint('Marked ${unreadDocs.length} notifications as read');
+    } catch (e) {
+      debugPrint('Error marking all notifications as read: $e');
+    }
+  }
+
+  /// Delete a notification
+  Future<void> deleteNotification(String notificationId) async {
+    try {
+      await _firestore.collection('notifications').doc(notificationId).delete();
+    } catch (e) {
+      debugPrint('Error deleting notification: $e');
     }
   }
 }

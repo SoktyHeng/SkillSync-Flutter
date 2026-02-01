@@ -1,7 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:skillsync_sp2/pages/edit_profile.dart';
+import 'package:skillsync_sp2/pages/notifications_page.dart';
 import 'package:skillsync_sp2/pages/settings.dart';
+import 'package:skillsync_sp2/services/notification_service.dart';
 import 'package:skillsync_sp2/services/user_service.dart';
 import 'package:skillsync_sp2/utils/profile_menu.dart';
 import 'package:skillsync_sp2/utils/profile_pic.dart';
@@ -16,6 +18,7 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   final user = FirebaseAuth.instance.currentUser!;
   final UserService _userService = UserService();
+  final NotificationService _notificationService = NotificationService();
   String _userName = '';
 
   @override
@@ -77,10 +80,24 @@ class _ProfilePageState extends State<ProfilePage> {
                   _loadUserName();
                 },
               ),
-              ProfileMenu(
-                text: "Notifications",
-                icon: Icons.notifications,
-                press: () {},
+              StreamBuilder<int>(
+                stream: _notificationService.getUnreadCount(),
+                builder: (context, snapshot) {
+                  final unreadCount = snapshot.data ?? 0;
+                  return ProfileMenu(
+                    text: "Notifications",
+                    icon: Icons.notifications,
+                    badgeCount: unreadCount,
+                    press: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const NotificationsPage(),
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
               ProfileMenu(
                 text: "Settings",
@@ -98,8 +115,10 @@ class _ProfilePageState extends State<ProfilePage> {
               ProfileMenu(
                 text: "Log Out",
                 icon: Icons.logout,
-                press: () {
-                  FirebaseAuth.instance.signOut();
+                press: () async {
+                  // Delete FCM token before signing out to prevent wrong device notifications
+                  await _notificationService.deleteToken();
+                  await FirebaseAuth.instance.signOut();
                 },
               ),
             ],

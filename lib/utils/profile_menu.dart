@@ -6,11 +6,13 @@ class ProfileMenu extends StatelessWidget {
     required this.text,
     required this.icon,
     this.press,
+    this.badgeCount,
   });
 
   final String text;
   final IconData icon;
   final VoidCallback? press;
+  final int? badgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +30,16 @@ class ProfileMenu extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, color: Colors.black, size: 22),
+            Badge(
+              isLabelVisible: badgeCount != null && badgeCount! > 0,
+              label: Text(
+                badgeCount != null && badgeCount! > 99
+                    ? '99+'
+                    : '${badgeCount ?? 0}',
+                style: const TextStyle(fontSize: 10),
+              ),
+              child: Icon(icon, color: Colors.black, size: 22),
+            ),
             const SizedBox(width: 20),
             Expanded(
               child: Text(
