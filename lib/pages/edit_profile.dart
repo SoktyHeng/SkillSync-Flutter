@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:skillsync_sp2/constants/app_data.dart';
 import 'package:skillsync_sp2/services/user_service.dart';
 
 class EditProfilePage extends StatefulWidget {
@@ -23,51 +24,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
   String? _selectedYear;
   final List<String> _selectedSkills = [];
 
-  final List<String> _majors = [
-    'Computer Science',
-    'Information Technology',
-    'Software Engineering',
-    'Data Science',
-    'Cybersecurity',
-    'Artificial Intelligence',
-    'Business Administration',
-    'Marketing',
-    'Finance',
-    'Graphic Design',
-    'Other',
-  ];
-
-  final List<String> _years = [
-    'Year 1',
-    'Year 2',
-    'Year 3',
-    'Year 4',
-    'Year 5+',
-    'Graduate',
-  ];
-
-  final List<String> _availableSkills = [
-    'Flutter',
-    'React',
-    'Python',
-    'Java',
-    'JavaScript',
-    'TypeScript',
-    'Node.js',
-    'Swift',
-    'Kotlin',
-    'C++',
-    'Go',
-    'Rust',
-    'SQL',
-    'MongoDB',
-    'Firebase',
-    'AWS',
-    'Docker',
-    'Git',
-    'UI/UX Design',
-    'Machine Learning',
-  ];
+  List<String> get _majors => AppData.majors;
+  List<String> get _years => AppData.years;
+  List<String> get _availableSkills => AppData.skills;
 
   @override
   void initState() {
@@ -540,10 +499,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         label: 'Major',
                         icon: Icons.school_outlined,
                       ),
+                      isExpanded: true,
                       items: _majors.map((major) {
                         return DropdownMenuItem(
                           value: major,
-                          child: Text(major),
+                          child: Text(
+                            major,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         );
                       }).toList(),
                       onChanged: (value) {

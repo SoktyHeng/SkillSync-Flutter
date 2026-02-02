@@ -1,7 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:skillsync_sp2/pages/home.dart';
+import 'package:skillsync_sp2/constants/app_data.dart';
+import 'package:skillsync_sp2/pages/navigation_bar.dart';
 import 'package:skillsync_sp2/services/user_service.dart';
 
 class SetupInfoPage extends StatefulWidget {
@@ -24,51 +25,9 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
   String? _selectedYear;
   final List<String> _selectedSkills = [];
 
-  final List<String> _majors = [
-    'Computer Science',
-    'Information Technology',
-    'Software Engineering',
-    'Data Science',
-    'Cybersecurity',
-    'Artificial Intelligence',
-    'Business Administration',
-    'Marketing',
-    'Finance',
-    'Graphic Design',
-    'Other',
-  ];
-
-  final List<String> _years = [
-    'Year 1',
-    'Year 2',
-    'Year 3',
-    'Year 4',
-    'Year 5+',
-    'Graduate',
-  ];
-
-  final List<String> _availableSkills = [
-    'Flutter',
-    'React',
-    'Python',
-    'Java',
-    'JavaScript',
-    'TypeScript',
-    'Node.js',
-    'Swift',
-    'Kotlin',
-    'C++',
-    'Go',
-    'Rust',
-    'SQL',
-    'MongoDB',
-    'Firebase',
-    'AWS',
-    'Docker',
-    'Git',
-    'UI/UX Design',
-    'Machine Learning',
-  ];
+  List<String> get _majors => AppData.majors;
+  List<String> get _years => AppData.years;
+  List<String> get _availableSkills => AppData.skills;
 
   @override
   void dispose() {
@@ -115,11 +74,14 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
         return StatefulBuilder(
           builder: (context, setModalState) {
             final filteredSkills = _availableSkills
-                .where((skill) =>
-                    skill.toLowerCase().contains(searchQuery.toLowerCase()))
+                .where(
+                  (skill) =>
+                      skill.toLowerCase().contains(searchQuery.toLowerCase()),
+                )
                 .toList();
 
-            final bool canAddCustomSkill = searchQuery.trim().isNotEmpty &&
+            final bool canAddCustomSkill =
+                searchQuery.trim().isNotEmpty &&
                 !_availableSkills
                     .map((s) => s.toLowerCase())
                     .contains(searchQuery.trim().toLowerCase()) &&
@@ -260,43 +222,48 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                             children: [
                               // Show selected custom skills (not in predefined list)
                               ..._selectedSkills
-                                  .where((skill) => !_availableSkills
-                                      .map((s) => s.toLowerCase())
-                                      .contains(skill.toLowerCase()))
-                                  .where((skill) =>
-                                      searchQuery.isEmpty ||
-                                      skill
-                                          .toLowerCase()
-                                          .contains(searchQuery.toLowerCase()))
+                                  .where(
+                                    (skill) => !_availableSkills
+                                        .map((s) => s.toLowerCase())
+                                        .contains(skill.toLowerCase()),
+                                  )
+                                  .where(
+                                    (skill) =>
+                                        searchQuery.isEmpty ||
+                                        skill.toLowerCase().contains(
+                                          searchQuery.toLowerCase(),
+                                        ),
+                                  )
                                   .map((skill) {
-                                return FilterChip(
-                                  label: Text(skill),
-                                  selected: true,
-                                  onSelected: (selected) {
-                                    setModalState(() {
-                                      _selectedSkills.remove(skill);
-                                    });
-                                    setState(() {});
-                                  },
-                                  selectedColor: Colors.deepPurple[500]
-                                      ?.withValues(alpha: 0.2),
-                                  checkmarkColor: Colors.deepPurple[700],
-                                  labelStyle: TextStyle(
-                                    color: Colors.deepPurple[500],
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                    side: BorderSide(
-                                      color: Colors.deepPurple[500]!,
-                                    ),
-                                  ),
-                                );
-                              }),
+                                    return FilterChip(
+                                      label: Text(skill),
+                                      selected: true,
+                                      onSelected: (selected) {
+                                        setModalState(() {
+                                          _selectedSkills.remove(skill);
+                                        });
+                                        setState(() {});
+                                      },
+                                      selectedColor: Colors.deepPurple[500]
+                                          ?.withValues(alpha: 0.2),
+                                      checkmarkColor: Colors.deepPurple[700],
+                                      labelStyle: TextStyle(
+                                        color: Colors.deepPurple[500],
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                        side: BorderSide(
+                                          color: Colors.deepPurple[500]!,
+                                        ),
+                                      ),
+                                    );
+                                  }),
                               // Show filtered predefined skills
                               ...filteredSkills.map((skill) {
-                                final isSelected =
-                                    _selectedSkills.contains(skill);
+                                final isSelected = _selectedSkills.contains(
+                                  skill,
+                                );
                                 return FilterChip(
                                   label: Text(skill),
                                   selected: isSelected,
@@ -411,7 +378,7 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
         _showSnackBar('Profile saved successfully!');
         // Navigate to home page after successful save
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomePage()),
+          MaterialPageRoute(builder: (context) => const NavigationPage()),
         );
       }
     } catch (e) {
@@ -551,8 +518,15 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                     label: 'Major',
                     icon: Icons.school_outlined,
                   ),
+                  isExpanded: true,
                   items: _majors.map((major) {
-                    return DropdownMenuItem(value: major, child: Text(major));
+                    return DropdownMenuItem(
+                      value: major,
+                      child: Text(
+                        major,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    );
                   }).toList(),
                   onChanged: (value) {
                     setState(() {
