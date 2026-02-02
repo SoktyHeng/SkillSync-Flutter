@@ -1,7 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:skillsync_sp2/pages/home.dart';
+import 'package:skillsync_sp2/constants/app_data.dart';
+import 'package:skillsync_sp2/pages/navigation_bar.dart';
 import 'package:skillsync_sp2/services/user_service.dart';
 
 class SetupInfoPage extends StatefulWidget {
@@ -24,51 +25,9 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
   String? _selectedYear;
   final List<String> _selectedSkills = [];
 
-  final List<String> _majors = [
-    'Computer Science',
-    'Information Technology',
-    'Software Engineering',
-    'Data Science',
-    'Cybersecurity',
-    'Artificial Intelligence',
-    'Business Administration',
-    'Marketing',
-    'Finance',
-    'Graphic Design',
-    'Other',
-  ];
-
-  final List<String> _years = [
-    'Year 1',
-    'Year 2',
-    'Year 3',
-    'Year 4',
-    'Year 5+',
-    'Graduate',
-  ];
-
-  final List<String> _availableSkills = [
-    'Flutter',
-    'React',
-    'Python',
-    'Java',
-    'JavaScript',
-    'TypeScript',
-    'Node.js',
-    'Swift',
-    'Kotlin',
-    'C++',
-    'Go',
-    'Rust',
-    'SQL',
-    'MongoDB',
-    'Firebase',
-    'AWS',
-    'Docker',
-    'Git',
-    'UI/UX Design',
-    'Machine Learning',
-  ];
+  List<String> get _majors => AppData.majors;
+  List<String> get _years => AppData.years;
+  List<String> get _availableSkills => AppData.skills;
 
   @override
   void dispose() {
@@ -102,6 +61,9 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
   }
 
   void _showSkillsBottomSheet() {
+    final TextEditingController searchController = TextEditingController();
+    String searchQuery = '';
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -111,8 +73,24 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
+            final filteredSkills = _availableSkills
+                .where(
+                  (skill) =>
+                      skill.toLowerCase().contains(searchQuery.toLowerCase()),
+                )
+                .toList();
+
+            final bool canAddCustomSkill =
+                searchQuery.trim().isNotEmpty &&
+                !_availableSkills
+                    .map((s) => s.toLowerCase())
+                    .contains(searchQuery.trim().toLowerCase()) &&
+                !_selectedSkills
+                    .map((s) => s.toLowerCase())
+                    .contains(searchQuery.trim().toLowerCase());
+
             return DraggableScrollableSheet(
-              initialChildSize: 0.6,
+              initialChildSize: 0.7,
               minChildSize: 0.4,
               maxChildSize: 0.9,
               expand: false,
@@ -142,54 +120,185 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Choose skills that best describe your expertise',
+                        'Choose skills or add your own',
                         style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
+                      // Search field
+                      TextField(
+                        controller: searchController,
+                        decoration: InputDecoration(
+                          hintText: 'Search or add a skill...',
+                          prefixIcon: const Icon(Icons.search),
+                          suffixIcon: searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: () {
+                                    searchController.clear();
+                                    setModalState(() {
+                                      searchQuery = '';
+                                    });
+                                  },
+                                )
+                              : null,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(color: Colors.grey[300]!),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: BorderSide(
+                              color: Colors.deepPurple[500]!,
+                              width: 2,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                        ),
+                        onChanged: (value) {
+                          setModalState(() {
+                            searchQuery = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      // Add custom skill button
+                      if (canAddCustomSkill)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: InkWell(
+                            onTap: () {
+                              final customSkill = searchQuery.trim();
+                              setModalState(() {
+                                _selectedSkills.add(customSkill);
+                                searchController.clear();
+                                searchQuery = '';
+                              });
+                              setState(() {});
+                            },
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: Colors.deepPurple[50],
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.deepPurple[200]!,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.add_circle,
+                                    color: Colors.deepPurple[500],
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      'Add "${searchQuery.trim()}" as a skill',
+                                      style: TextStyle(
+                                        color: Colors.deepPurple[700],
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      // Skills list
                       Expanded(
                         child: SingleChildScrollView(
                           controller: scrollController,
                           child: Wrap(
                             spacing: 8,
                             runSpacing: 8,
-                            children: _availableSkills.map((skill) {
-                              final isSelected = _selectedSkills.contains(
-                                skill,
-                              );
-                              return FilterChip(
-                                label: Text(skill),
-                                selected: isSelected,
-                                onSelected: (selected) {
-                                  setModalState(() {
-                                    if (selected) {
-                                      _selectedSkills.add(skill);
-                                    } else {
-                                      _selectedSkills.remove(skill);
-                                    }
-                                  });
-                                  setState(() {});
-                                },
-                                selectedColor: Colors.deepPurple[500]
-                                    ?.withValues(alpha: 0.2),
-                                checkmarkColor: Colors.deepPurple[700],
-                                labelStyle: TextStyle(
-                                  color: isSelected
-                                      ? Colors.deepPurple[500]
-                                      : Colors.black,
-                                  fontWeight: isSelected
-                                      ? FontWeight.w600
-                                      : FontWeight.normal,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(20),
-                                  side: BorderSide(
+                            children: [
+                              // Show selected custom skills (not in predefined list)
+                              ..._selectedSkills
+                                  .where(
+                                    (skill) => !_availableSkills
+                                        .map((s) => s.toLowerCase())
+                                        .contains(skill.toLowerCase()),
+                                  )
+                                  .where(
+                                    (skill) =>
+                                        searchQuery.isEmpty ||
+                                        skill.toLowerCase().contains(
+                                          searchQuery.toLowerCase(),
+                                        ),
+                                  )
+                                  .map((skill) {
+                                    return FilterChip(
+                                      label: Text(skill),
+                                      selected: true,
+                                      onSelected: (selected) {
+                                        setModalState(() {
+                                          _selectedSkills.remove(skill);
+                                        });
+                                        setState(() {});
+                                      },
+                                      selectedColor: Colors.deepPurple[500]
+                                          ?.withValues(alpha: 0.2),
+                                      checkmarkColor: Colors.deepPurple[700],
+                                      labelStyle: TextStyle(
+                                        color: Colors.deepPurple[500],
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                        side: BorderSide(
+                                          color: Colors.deepPurple[500]!,
+                                        ),
+                                      ),
+                                    );
+                                  }),
+                              // Show filtered predefined skills
+                              ...filteredSkills.map((skill) {
+                                final isSelected = _selectedSkills.contains(
+                                  skill,
+                                );
+                                return FilterChip(
+                                  label: Text(skill),
+                                  selected: isSelected,
+                                  onSelected: (selected) {
+                                    setModalState(() {
+                                      if (selected) {
+                                        _selectedSkills.add(skill);
+                                      } else {
+                                        _selectedSkills.remove(skill);
+                                      }
+                                    });
+                                    setState(() {});
+                                  },
+                                  selectedColor: Colors.deepPurple[500]
+                                      ?.withValues(alpha: 0.2),
+                                  checkmarkColor: Colors.deepPurple[700],
+                                  labelStyle: TextStyle(
                                     color: isSelected
-                                        ? Colors.deepPurple[500]!
-                                        : Colors.grey[300]!,
+                                        ? Colors.deepPurple[500]
+                                        : Colors.black,
+                                    fontWeight: isSelected
+                                        ? FontWeight.w600
+                                        : FontWeight.normal,
                                   ),
-                                ),
-                              );
-                            }).toList(),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                    side: BorderSide(
+                                      color: isSelected
+                                          ? Colors.deepPurple[500]!
+                                          : Colors.grey[300]!,
+                                    ),
+                                  ),
+                                );
+                              }),
+                            ],
                           ),
                         ),
                       ),
@@ -269,7 +378,7 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
         _showSnackBar('Profile saved successfully!');
         // Navigate to home page after successful save
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomePage()),
+          MaterialPageRoute(builder: (context) => const NavigationPage()),
         );
       }
     } catch (e) {
@@ -409,8 +518,15 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                     label: 'Major',
                     icon: Icons.school_outlined,
                   ),
+                  isExpanded: true,
                   items: _majors.map((major) {
-                    return DropdownMenuItem(value: major, child: Text(major));
+                    return DropdownMenuItem(
+                      value: major,
+                      child: Text(
+                        major,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    );
                   }).toList(),
                   onChanged: (value) {
                     setState(() {
