@@ -132,12 +132,12 @@ class _LoginPageState extends State<LoginPage> {
                 children: [
                   const SizedBox(height: 80),
 
-                  // Logo with shadow
+                  // // Logo with shadow
                   Image.asset(
-                    'assets/logo.jpg',
+                    'assets/logo.png',
                     width: 120,
                     height: 120,
-                    fit: BoxFit.cover,
+                    // fit: BoxFit.cover,
                   ),
                   const SizedBox(height: 20),
 
@@ -308,8 +308,10 @@ class _LoginPageState extends State<LoginPage> {
                         height: 60,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border:
-                              Border.all(color: Colors.grey[300]!, width: 2),
+                          border: Border.all(
+                            color: Colors.grey[300]!,
+                            width: 2,
+                          ),
                           color: Colors.white,
                         ),
                         child: IconButton(
@@ -328,8 +330,10 @@ class _LoginPageState extends State<LoginPage> {
                         height: 60,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border:
-                              Border.all(color: Colors.grey[300]!, width: 2),
+                          border: Border.all(
+                            color: Colors.grey[300]!,
+                            width: 2,
+                          ),
                           color: Colors.white,
                         ),
                         child: IconButton(
