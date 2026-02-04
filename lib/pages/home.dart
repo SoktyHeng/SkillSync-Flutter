@@ -96,7 +96,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: isDark ? null : Colors.grey[50],
+      backgroundColor: isDark ? const Color(0xFF121212) : Colors.white,
       appBar: AppBar(title: const Text('Discover Projects')),
       body: Column(
         children: [
@@ -138,7 +138,10 @@ class _HomePageState extends State<HomePage> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.deepPurple[300]!, width: 1.5),
+                  borderSide: BorderSide(
+                    color: Colors.deepPurple[300]!,
+                    width: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -163,7 +166,9 @@ class _HomePageState extends State<HomePage> {
                           _selectedDuration = duration;
                         });
                       },
-                      backgroundColor: Colors.grey[100],
+                      backgroundColor: isDark
+                          ? const Color(0xFF121212)
+                          : Colors.white,
                       selectedColor: Colors.deepPurple[100],
                       checkmarkColor: Colors.deepPurple[700],
                       labelStyle: TextStyle(
@@ -239,7 +244,8 @@ class _HomePageState extends State<HomePage> {
                     emptyMessage = 'No projects found for "$_searchQuery"';
                     emptySubtitle = 'Try a different search term';
                   } else if (_selectedDuration != 'All') {
-                    emptyMessage = 'No projects with $_selectedDuration duration';
+                    emptyMessage =
+                        'No projects with $_selectedDuration duration';
                     emptySubtitle = 'Try a different duration filter';
                   } else {
                     emptyMessage = 'No projects yet';
@@ -335,7 +341,9 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
   }
 
   Future<void> _loadUserRequestStatus() async {
-    final status = await widget.projectService.getRequestStatus(widget.projectId);
+    final status = await widget.projectService.getRequestStatus(
+      widget.projectId,
+    );
     if (mounted) {
       setState(() {
         _userRequestStatus = status;
