@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:skillsync_sp2/constants/app_data.dart';
 import 'package:skillsync_sp2/pages/navigation_bar.dart';
+import 'package:skillsync_sp2/services/github_service.dart';
 import 'package:skillsync_sp2/services/user_service.dart';
 
 class SetupInfoPage extends StatefulWidget {
@@ -15,11 +16,14 @@ class SetupInfoPage extends StatefulWidget {
 class _SetupInfoPageState extends State<SetupInfoPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _githubController = TextEditingController();
 
   final UserService _userService = UserService();
+  final GitHubService _githubService = GitHubService();
   final User? _currentUser = FirebaseAuth.instance.currentUser;
   bool _isLoading = false;
+  bool _isGitHubLinked = false;
+  bool _isGitHubLoading = false;
+  String? _githubUsername;
 
   String? _selectedMajor;
   String? _selectedYear;
@@ -33,7 +37,6 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    _githubController.dispose();
     super.dispose();
   }
 
@@ -335,6 +338,173 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
     );
   }
 
+  Widget _buildGitHubSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'GitHub (Optional)',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey[300]!),
+            borderRadius: BorderRadius.circular(12),
+            color: Colors.white,
+          ),
+          child: _isGitHubLinked
+              ? _buildGitHubConnected()
+              : _buildGitHubDisconnected(),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Link your GitHub to showcase your projects',
+          style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGitHubConnected() {
+    return Row(
+      children: [
+        Icon(Icons.code, size: 24, color: Colors.grey[700]),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _githubUsername != null && _githubUsername!.isNotEmpty
+                    ? '@$_githubUsername'
+                    : 'Connected',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'GitHub account linked',
+                style: TextStyle(fontSize: 12, color: Colors.green[600]),
+              ),
+            ],
+          ),
+        ),
+        if (_isGitHubLoading)
+          const SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+        else
+          TextButton(
+            onPressed: _disconnectGitHub,
+            child: Text(
+              'Disconnect',
+              style: TextStyle(color: Colors.red[400]),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildGitHubDisconnected() {
+    return GestureDetector(
+      onTap: _isGitHubLoading ? null : _connectGitHub,
+      child: Row(
+        children: [
+          Icon(Icons.code, size: 24, color: Colors.grey[600]),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Connect GitHub Account',
+              style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+            ),
+          ),
+          if (_isGitHubLoading)
+            const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          else
+            Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _connectGitHub() async {
+    setState(() => _isGitHubLoading = true);
+    try {
+      final username = await _githubService.linkGitHub();
+      if (mounted) {
+        setState(() {
+          _isGitHubLinked = true;
+          _githubUsername = username;
+          _isGitHubLoading = false;
+        });
+        _showSnackBar('GitHub account connected successfully!');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isGitHubLoading = false);
+        _showSnackBar(e.toString().replaceAll('Exception: ', ''));
+      }
+    }
+  }
+
+  Future<void> _disconnectGitHub() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Disconnect GitHub?'),
+        content: const Text(
+          'This will remove your GitHub account from your profile. '
+          'You can reconnect it anytime.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Disconnect', style: TextStyle(color: Colors.red[400])),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() => _isGitHubLoading = true);
+    try {
+      await _githubService.unlinkGitHub();
+      if (mounted) {
+        setState(() {
+          _isGitHubLinked = false;
+          _githubUsername = null;
+          _isGitHubLoading = false;
+        });
+        _showSnackBar('GitHub account disconnected.');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isGitHubLoading = false);
+        _showSnackBar('Error disconnecting GitHub: ${e.toString()}');
+      }
+    }
+  }
+
   Future<void> _saveProfile() async {
     // Validate required fields
     if (_nameController.text.trim().isEmpty) {
@@ -369,9 +539,6 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
         yearOfStudy: _selectedYear!,
         phoneNumber: _phoneController.text.trim(),
         skills: _selectedSkills,
-        githubUrl: _githubController.text.trim().isNotEmpty
-            ? _githubController.text.trim()
-            : null,
       );
 
       if (mounted) {
@@ -645,38 +812,8 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                 ),
                 const SizedBox(height: 20),
 
-                // GitHub link field (optional)
-                TextField(
-                  controller: _githubController,
-                  keyboardType: TextInputType.url,
-                  decoration: InputDecoration(
-                    labelText: 'GitHub Profile (Optional)',
-                    hintText: 'https://github.com/username',
-                    prefixIcon: const Icon(Icons.code),
-                    suffixIcon: Icon(Icons.link, color: Colors.grey[400]),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                      borderSide: BorderSide(color: Colors.grey[300]!),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12.0),
-                      borderSide: BorderSide(
-                        color: Colors.deepPurple[500]!,
-                        width: 2,
-                      ),
-                    ),
-                    filled: true,
-                    fillColor: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Link your GitHub to showcase your projects',
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                ),
+                // GitHub section (optional)
+                _buildGitHubSection(),
                 const SizedBox(height: 32),
 
                 // Save button

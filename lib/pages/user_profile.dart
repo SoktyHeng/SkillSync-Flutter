@@ -296,12 +296,26 @@ class _UserProfilePageState extends State<UserProfilePage> {
                 children: [
                   Icon(Icons.code, size: 20, color: Colors.grey[600]),
                   const SizedBox(width: 12),
-                  Text(
-                    'View GitHub Profile',
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.deepPurple[500],
-                      fontWeight: FontWeight.w500,
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Text(
+                          _userData?['githubUsername'] != null &&
+                                  (_userData!['githubUsername'] as String)
+                                      .isNotEmpty
+                              ? '@${_userData!['githubUsername']}'
+                              : 'View GitHub Profile',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Colors.deepPurple[500],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        if (_userData?['githubLinked'] == true) ...[
+                          const SizedBox(width: 6),
+                          Icon(Icons.verified, size: 16, color: Colors.green[600]),
+                        ],
+                      ],
                     ),
                   ),
                   const SizedBox(width: 4),
