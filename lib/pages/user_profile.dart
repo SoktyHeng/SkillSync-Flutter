@@ -145,10 +145,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: isDark ? null : Colors.grey[50],
       appBar: AppBar(
-        backgroundColor: Colors.white,
         title: const Text('Profile'),
         elevation: 0,
         actions: [
@@ -196,12 +196,13 @@ class _UserProfilePageState extends State<UserProfilePage> {
     final averageRating = (_userData?['averageRating'] ?? 0).toDouble();
     final totalRatings = _userData?['totalRatings'] ?? 0;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+        border: Border(bottom: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[200]!)),
       ),
       child: Column(
         children: [
@@ -258,15 +259,16 @@ class _UserProfilePageState extends State<UserProfilePage> {
   }
 
   Widget _buildAboutSection() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(top: 12),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         border: Border(
-          top: BorderSide(color: Colors.grey[200]!),
-          bottom: BorderSide(color: Colors.grey[200]!),
+          top: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
+          bottom: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
         ),
       ),
       child: Column(
@@ -366,10 +368,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
       margin: const EdgeInsets.only(top: 12),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
         border: Border(
-          top: BorderSide(color: Colors.grey[200]!),
-          bottom: BorderSide(color: Colors.grey[200]!),
+          top: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800]! : Colors.grey[200]!),
+          bottom: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800]! : Colors.grey[200]!),
         ),
       ),
       child: Column(
@@ -416,10 +418,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
       margin: const EdgeInsets.only(top: 12),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
         border: Border(
-          top: BorderSide(color: Colors.grey[200]!),
-          bottom: BorderSide(color: Colors.grey[200]!),
+          top: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800]! : Colors.grey[200]!),
+          bottom: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800]! : Colors.grey[200]!),
         ),
       ),
       child: Column(
@@ -504,7 +506,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).scaffoldBackgroundColor,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),

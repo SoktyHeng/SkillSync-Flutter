@@ -45,6 +45,7 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
     required IconData icon,
     String? hint,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return InputDecoration(
       labelText: label,
       hintText: hint,
@@ -52,14 +53,14 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0)),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.0),
-        borderSide: BorderSide(color: Colors.grey[300]!),
+        borderSide: BorderSide(color: isDark ? Colors.grey[700]! : Colors.grey[300]!),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.0),
         borderSide: BorderSide(color: Colors.deepPurple[500]!, width: 2),
       ),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.white,
     );
   }
 
@@ -108,7 +109,7 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                           width: 40,
                           height: 4,
                           decoration: BoxDecoration(
-                            color: Colors.grey[300],
+                            color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[600] : Colors.grey[300],
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -149,7 +150,7 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                            borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -286,7 +287,7 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                                   labelStyle: TextStyle(
                                     color: isSelected
                                         ? Colors.deepPurple[500]
-                                        : Colors.black,
+                                        : null,
                                     fontWeight: isSelected
                                         ? FontWeight.w600
                                         : FontWeight.normal,
@@ -296,7 +297,7 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                                     side: BorderSide(
                                       color: isSelected
                                           ? Colors.deepPurple[500]!
-                                          : Colors.grey[300]!,
+                                          : Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!,
                                     ),
                                   ),
                                 );
@@ -342,12 +343,12 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'GitHub (Optional)',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: Colors.black87,
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black87,
           ),
         ),
         const SizedBox(height: 8),
@@ -355,9 +356,9 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[300]!),
+            border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
             borderRadius: BorderRadius.circular(12),
-            color: Colors.white,
+            color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2C2C2C) : Colors.white,
           ),
           child: _isGitHubLinked
               ? _buildGitHubConnected()
@@ -573,8 +574,8 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
@@ -594,12 +595,12 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                         color: Colors.deepPurple[500],
                       ),
                       const SizedBox(height: 16),
-                      const Text(
+                      Text(
                         'Complete Your Profile',
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: isDark ? Colors.white : Colors.black87,
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -647,10 +648,10 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                               const SizedBox(height: 2),
                               Text(
                                 _currentUser!.email!,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w500,
-                                  color: Colors.black87,
+                                  color: isDark ? Colors.white : Colors.black87,
                                 ),
                               ),
                             ],
@@ -701,7 +702,7 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                     });
                   },
                   borderRadius: BorderRadius.circular(12),
-                  dropdownColor: Colors.white,
+                  dropdownColor: isDark ? const Color(0xFF2C2C2C) : Colors.white,
                 ),
                 const SizedBox(height: 20),
 
@@ -721,7 +722,7 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                     });
                   },
                   borderRadius: BorderRadius.circular(12),
-                  dropdownColor: Colors.white,
+                  dropdownColor: isDark ? const Color(0xFF2C2C2C) : Colors.white,
                 ),
                 const SizedBox(height: 20),
 
@@ -739,12 +740,12 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                 const SizedBox(height: 20),
 
                 // Skills section
-                const Text(
+                Text(
                   'Skills',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black87,
+                    color: isDark ? Colors.white : Colors.black87,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -754,9 +755,9 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[300]!),
+                      border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey[300]!),
                       borderRadius: BorderRadius.circular(12),
-                      color: Colors.white,
+                      color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
                     ),
                     child: _selectedSkills.isEmpty
                         ? Row(

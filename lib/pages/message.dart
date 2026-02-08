@@ -23,11 +23,11 @@ class _MessagePageState extends State<MessagePage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: isDark ? null : Colors.grey[50],
       appBar: AppBar(
         title: const Text('Messages'),
-        backgroundColor: Colors.white,
         elevation: 0,
       ),
       body: Column(
@@ -35,7 +35,7 @@ class _MessagePageState extends State<MessagePage> {
           // Search Bar
           Container(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            color: Colors.white,
+            color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
             child: TextField(
               controller: _searchController,
               onChanged: (value) {
@@ -59,7 +59,7 @@ class _MessagePageState extends State<MessagePage> {
                       )
                     : null,
                 filled: true,
-                fillColor: Colors.grey[100],
+                fillColor: isDark ? Colors.grey[800] : Colors.grey[100],
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,

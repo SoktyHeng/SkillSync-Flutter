@@ -280,11 +280,8 @@ class _ProjectDetailState extends State<ProjectDetail> {
         Navigator.pop(context, _didRequestThisSession);
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
         appBar: AppBar(
           title: const Text('Project Details'),
-          backgroundColor: Colors.white,
-          foregroundColor: Colors.black,
           elevation: 0,
         ),
       body: SingleChildScrollView(
@@ -306,8 +303,8 @@ class _ProjectDetailState extends State<ProjectDetail> {
               child: Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
+                  color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.grey[50],
+                  border: Border(bottom: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800]! : Colors.grey[200]!)),
                 ),
                 child: Row(
                   children: [

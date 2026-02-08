@@ -43,7 +43,7 @@ class _ProfilePicState extends State<ProfilePic> {
 
   Future<void> _pickImage() async {
     showModalBottomSheet(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -213,7 +213,9 @@ class _ProfilePicState extends State<ProfilePic> {
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.white,
                     shape: const CircleBorder(),
-                    backgroundColor: const Color(0xFFF5F6F9),
+                    backgroundColor: Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF1E1E1E)
+                        : const Color(0xFFF5F6F9),
                   ),
                   onPressed: _isUploading ? null : _pickImage,
                   child: SvgPicture.string(cameraIcon),

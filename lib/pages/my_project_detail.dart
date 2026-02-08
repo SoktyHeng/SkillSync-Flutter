@@ -105,7 +105,6 @@ class _MyProjectDetailState extends State<MyProjectDetail>
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -157,7 +156,6 @@ class _MyProjectDetailState extends State<MyProjectDetail>
         title: const Text('Project Details'),
         actions: [
           PopupMenuButton<String>(
-            color: Colors.white,
             icon: Icon(Icons.more_vert, color: Colors.grey[700]),
             onSelected: (value) {
               if (value == 'edit') {
@@ -460,7 +458,7 @@ class _RequestCardState extends State<_RequestCard> {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       margin: EdgeInsets.only(bottom: 1),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       child: ListTile(
@@ -555,7 +553,7 @@ class _ContributorCardState extends State<_ContributorCard> {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       margin: EdgeInsets.only(bottom: 1),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       child: ListTile(

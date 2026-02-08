@@ -62,8 +62,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      appBar: AppBar(backgroundColor: Colors.deepPurple[200], elevation: 0),
+      appBar: AppBar(elevation: 0),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -89,14 +90,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12.0),
-                  borderSide: BorderSide(color: Colors.grey[300]!),
+                  borderSide: BorderSide(color: isDark ? Colors.grey[700]! : Colors.grey[300]!),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12.0),
                   borderSide: const BorderSide(color: Colors.purple, width: 2),
                 ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.white,
               ),
             ),
           ),

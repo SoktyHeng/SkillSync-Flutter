@@ -87,6 +87,10 @@ class _MyAppState extends State<MyApp> {
             primarySwatch: Colors.deepPurple,
             brightness: Brightness.light,
             scaffoldBackgroundColor: Colors.white,
+            cardColor: Colors.white,
+            dialogTheme: const DialogThemeData(
+              backgroundColor: Colors.white,
+            ),
             appBarTheme: const AppBarTheme(
               backgroundColor: Colors.white,
               foregroundColor: Colors.black,
@@ -97,11 +101,25 @@ class _MyAppState extends State<MyApp> {
               selectedItemColor: Colors.deepPurple,
               unselectedItemColor: Colors.grey,
             ),
+            inputDecorationTheme: InputDecorationTheme(
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            popupMenuTheme: const PopupMenuThemeData(
+              color: Colors.white,
+            ),
           ),
           darkTheme: ThemeData(
             primarySwatch: Colors.deepPurple,
             brightness: Brightness.dark,
             scaffoldBackgroundColor: const Color(0xFF121212),
+            cardColor: const Color(0xFF1E1E1E),
+            dialogTheme: const DialogThemeData(
+              backgroundColor: Color(0xFF1E1E1E),
+            ),
             appBarTheme: const AppBarTheme(
               backgroundColor: Color(0xFF121212),
               foregroundColor: Colors.white,
@@ -112,6 +130,17 @@ class _MyAppState extends State<MyApp> {
               selectedItemColor: Colors.deepPurple,
               unselectedItemColor: Colors.grey,
             ),
+            inputDecorationTheme: InputDecorationTheme(
+              filled: true,
+              fillColor: const Color(0xFF2C2C2C),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            popupMenuTheme: const PopupMenuThemeData(
+              color: Color(0xFF1E1E1E),
+            ),
+            dividerColor: Colors.grey[800],
           ),
           themeMode: themeProvider.themeMode,
           home: MainPage(),

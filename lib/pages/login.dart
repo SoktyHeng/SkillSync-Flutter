@@ -120,8 +120,8 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -142,12 +142,12 @@ class _LoginPageState extends State<LoginPage> {
                   const SizedBox(height: 20),
 
                   // Welcome text
-                  const Text(
+                  Text(
                     'Welcome Back!',
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: isDark ? Colors.white : Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -169,7 +169,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12.0),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
+                        borderSide: BorderSide(color: isDark ? Colors.grey[700]! : Colors.grey[300]!),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12.0),
@@ -179,7 +179,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.white,
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -208,7 +208,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12.0),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
+                        borderSide: BorderSide(color: isDark ? Colors.grey[700]! : Colors.grey[300]!),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12.0),
@@ -218,7 +218,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.white,
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -309,10 +309,10 @@ class _LoginPageState extends State<LoginPage> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: Colors.grey[300]!,
+                            color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
                             width: 2,
                           ),
-                          color: Colors.white,
+                          color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
                         ),
                         child: IconButton(
                           onPressed: signInWithGoogle,
@@ -331,10 +331,10 @@ class _LoginPageState extends State<LoginPage> {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: Colors.grey[300]!,
+                            color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
                             width: 2,
                           ),
-                          color: Colors.white,
+                          color: isDark ? const Color(0xFF2C2C2C) : Colors.white,
                         ),
                         child: IconButton(
                           onPressed: signInWithMicrosoft,

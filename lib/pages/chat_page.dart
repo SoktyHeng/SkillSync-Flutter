@@ -144,7 +144,7 @@ class _ChatPageState extends State<ChatPage> {
         margin: const EdgeInsets.symmetric(vertical: 16),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: Colors.grey[200],
+          color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[200],
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
@@ -163,10 +163,10 @@ class _ChatPageState extends State<ChatPage> {
   Widget build(BuildContext context) {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: isDark ? null : Colors.grey[50],
       appBar: AppBar(
-        backgroundColor: Colors.white,
         title: GestureDetector(
           onTap: () {
             Navigator.push(
@@ -299,7 +299,7 @@ class _ChatPageState extends State<ChatPage> {
         ),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isMe ? Colors.deepPurple[500] : Colors.white,
+          color: isMe ? Colors.deepPurple[500] : Theme.of(context).cardColor,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
@@ -340,10 +340,11 @@ class _ChatPageState extends State<ChatPage> {
   }
 
   Widget _buildMessageInput() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -362,7 +363,7 @@ class _ChatPageState extends State<ChatPage> {
                   hintText: 'Type a message...',
                   hintStyle: TextStyle(color: Colors.grey[500]),
                   filled: true,
-                  fillColor: Colors.grey[100],
+                  fillColor: isDark ? Colors.grey[800] : Colors.grey[100],
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
                     borderSide: BorderSide.none,
