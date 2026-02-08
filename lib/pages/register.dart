@@ -46,8 +46,8 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.white,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -66,12 +66,12 @@ class _RegisterPageState extends State<RegisterPage> {
                   const SizedBox(height: 20),
 
                   // Welcome text
-                  const Text(
+                  Text(
                     'Hello There!',
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: isDark ? Colors.white : Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -93,7 +93,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12.0),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
+                        borderSide: BorderSide(color: isDark ? Colors.grey[700]! : Colors.grey[300]!),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12.0),
@@ -103,7 +103,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.white,
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -132,7 +132,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12.0),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
+                        borderSide: BorderSide(color: isDark ? Colors.grey[700]! : Colors.grey[300]!),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12.0),
@@ -142,7 +142,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.white,
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -171,7 +171,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12.0),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
+                        borderSide: BorderSide(color: isDark ? Colors.grey[700]! : Colors.grey[300]!),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12.0),
@@ -181,7 +181,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         ),
                       ),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: isDark ? const Color(0xFF2C2C2C) : Colors.white,
                     ),
                   ),
                   const SizedBox(height: 20),

@@ -371,7 +371,7 @@ class _ProjectCardState extends State<_ProjectCard> {
         }
       },
       child: Card(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         margin: const EdgeInsets.only(bottom: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 1,

@@ -89,7 +89,7 @@ class HelpCenterPage extends StatelessWidget {
     required List<Widget> children,
   }) {
     return Card(
-      color: Colors.white,
+      color: Theme.of(context).cardColor,
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Column(

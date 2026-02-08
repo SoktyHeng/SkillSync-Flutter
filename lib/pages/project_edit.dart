@@ -124,14 +124,22 @@ class _ProjectEditState extends State<ProjectEdit> {
       lastDate: lastDate,
       initialDateRange: _selectedDateRange,
       builder: (context, child) {
+        final isDarkMode = Theme.of(context).brightness == Brightness.dark;
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Colors.deepPurple[500]!,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Colors.black,
-            ),
+            colorScheme: isDarkMode
+                ? ColorScheme.dark(
+                    primary: Colors.deepPurple[500]!,
+                    onPrimary: Colors.white,
+                    surface: const Color(0xFF1E1E1E),
+                    onSurface: Colors.white,
+                  )
+                : ColorScheme.light(
+                    primary: Colors.deepPurple[500]!,
+                    onPrimary: Colors.white,
+                    surface: Colors.white,
+                    onSurface: Colors.black,
+                  ),
           ),
           child: child!,
         );
@@ -249,24 +257,25 @@ class _ProjectEditState extends State<ProjectEdit> {
       hintStyle: TextStyle(color: Colors.grey[400]),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.grey[300]!),
+        borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: Colors.grey[300]!),
+        borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
         borderSide: BorderSide(color: Colors.deepPurple[500]!, width: 2),
       ),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2C2C2C) : Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return PopScope(
       canPop: !_hasUnsavedChanges,
       onPopInvokedWithResult: (didPop, result) async {
@@ -277,10 +286,8 @@ class _ProjectEditState extends State<ProjectEdit> {
         }
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
         appBar: AppBar(
           title: const Text('Edit Project'),
-          backgroundColor: Colors.white,
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
@@ -368,8 +375,10 @@ class _ProjectEditState extends State<ProjectEdit> {
                         vertical: 12,
                       ),
                       decoration: BoxDecoration(
-                        color: _isOngoing ? Colors.grey[100] : Colors.white,
-                        border: Border.all(color: Colors.grey[300]!),
+                        color: _isOngoing
+                            ? (isDark ? Colors.grey[800] : Colors.grey[100])
+                            : (isDark ? const Color(0xFF2C2C2C) : Colors.white),
+                        border: Border.all(color: isDark ? Colors.grey[700]! : Colors.grey[300]!),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -389,7 +398,7 @@ class _ProjectEditState extends State<ProjectEdit> {
                                   : 'Select date range',
                               style: TextStyle(
                                 color: _selectedDateRange != null
-                                    ? Colors.black
+                                    ? null
                                     : Colors.grey[400],
                                 fontSize: 16,
                               ),
@@ -447,11 +456,11 @@ class _ProjectEditState extends State<ProjectEdit> {
                             _onFormChanged();
                           });
                         },
-                        child: const Text(
+                        child: Text(
                           'Ongoing project (no end date)',
                           style: TextStyle(
                             fontSize: 14,
-                            color: Colors.black87,
+                            color: isDark ? Colors.grey[300] : Colors.black87,
                           ),
                         ),
                       ),

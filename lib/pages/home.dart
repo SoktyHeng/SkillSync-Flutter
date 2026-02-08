@@ -402,7 +402,7 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
         margin: const EdgeInsets.only(bottom: 16),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         elevation: 2,
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(

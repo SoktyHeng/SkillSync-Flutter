@@ -16,6 +16,7 @@ class ProfileMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: TextButton(
@@ -26,7 +27,7 @@ class ProfileMenu extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15),
           ),
-          backgroundColor: const Color(0xFFF5F6F9),
+          backgroundColor: isDark ? const Color(0xFF1E1E1E) : const Color(0xFFF5F6F9),
         ),
         child: Row(
           children: [
@@ -38,16 +39,16 @@ class ProfileMenu extends StatelessWidget {
                     : '${badgeCount ?? 0}',
                 style: const TextStyle(fontSize: 10),
               ),
-              child: Icon(icon, color: Colors.black, size: 22),
+              child: Icon(icon, color: isDark ? Colors.white : Colors.black, size: 22),
             ),
             const SizedBox(width: 20),
             Expanded(
               child: Text(
                 text,
-                style: const TextStyle(color: Color(0xFF757575)),
+                style: TextStyle(color: isDark ? Colors.grey[400] : const Color(0xFF757575)),
               ),
             ),
-            const Icon(Icons.arrow_forward_ios, color: Color(0xFF757575)),
+            Icon(Icons.arrow_forward_ios, color: isDark ? Colors.grey[400] : const Color(0xFF757575)),
           ],
         ),
       ),

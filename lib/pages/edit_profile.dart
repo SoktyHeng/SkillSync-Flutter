@@ -93,14 +93,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0)),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.0),
-        borderSide: BorderSide(color: Colors.grey[300]!),
+        borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.0),
         borderSide: BorderSide(color: Colors.deepPurple[500]!, width: 2),
       ),
       filled: true,
-      fillColor: Colors.white,
+      fillColor: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF2C2C2C) : Colors.white,
     );
   }
 
@@ -319,7 +319,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                   labelStyle: TextStyle(
                                     color: isSelected
                                         ? Colors.deepPurple[500]
-                                        : Colors.black,
+                                        : null,
                                     fontWeight: isSelected
                                         ? FontWeight.w600
                                         : FontWeight.normal,
@@ -375,12 +375,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'GitHub (Optional)',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: Colors.black87,
+            color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[300] : Colors.black87,
           ),
         ),
         const SizedBox(height: 8),
@@ -388,9 +388,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[300]!),
+            border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
             borderRadius: BorderRadius.circular(12),
-            color: Colors.white,
+            color: Theme.of(context).cardColor,
           ),
           child: _isGitHubLinked
               ? _buildGitHubConnected()
@@ -627,10 +627,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         ),
                         disabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12.0),
-                          borderSide: BorderSide(color: Colors.grey[300]!),
+                          borderSide: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
                         ),
                         filled: true,
-                        fillColor: Colors.grey[100],
+                        fillColor: Theme.of(context).brightness == Brightness.dark ? Colors.grey[850] : Colors.grey[100],
                       ),
                     ),
                     const SizedBox(height: 20),
@@ -683,7 +683,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         });
                       },
                       borderRadius: BorderRadius.circular(12),
-                      dropdownColor: Colors.white,
+                      dropdownColor: Theme.of(context).cardColor,
                     ),
                     const SizedBox(height: 20),
 
@@ -703,17 +703,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         });
                       },
                       borderRadius: BorderRadius.circular(12),
-                      dropdownColor: Colors.white,
+                      dropdownColor: Theme.of(context).cardColor,
                     ),
                     const SizedBox(height: 20),
 
                     // Skills section
-                    const Text(
+                    Text(
                       'Skills',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                        color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[300] : Colors.black87,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -723,9 +723,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         width: double.infinity,
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey[300]!),
+                          border: Border.all(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[700]! : Colors.grey[300]!),
                           borderRadius: BorderRadius.circular(12),
-                          color: Colors.white,
+                          color: Theme.of(context).cardColor,
                         ),
                         child: _selectedSkills.isEmpty
                             ? Row(
