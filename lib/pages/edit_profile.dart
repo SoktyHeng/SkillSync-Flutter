@@ -49,8 +49,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
           _isGitHubLinked = _githubService.isGitHubLinked();
           _githubUsername = userData['githubUsername'] ??
               _githubService.getLinkedGitHubUsername();
-          _selectedMajor = userData['major'];
-          _selectedYear = userData['yearOfStudy'];
+          final major = userData['major'];
+          _selectedMajor = _majors.contains(major) ? major : null;
+          final year = userData['yearOfStudy'];
+          _selectedYear = _years.contains(year) ? year : null;
           if (userData['skills'] != null) {
             _selectedSkills.clear();
             _selectedSkills.addAll(List<String>.from(userData['skills']));
