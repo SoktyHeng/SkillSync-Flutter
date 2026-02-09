@@ -230,7 +230,6 @@ class _ProjectEditState extends State<ProjectEdit> {
       );
 
       if (mounted) {
-        _showSnackBar('Project updated successfully!');
         Navigator.pop(context, true);
       }
     } catch (e) {

@@ -453,7 +453,6 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
           _githubUsername = username;
           _isGitHubLoading = false;
         });
-        _showSnackBar('GitHub account connected successfully!');
       }
     } catch (e) {
       if (mounted) {
@@ -496,7 +495,6 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
           _githubUsername = null;
           _isGitHubLoading = false;
         });
-        _showSnackBar('GitHub account disconnected.');
       }
     } catch (e) {
       if (mounted) {
@@ -543,7 +541,6 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
       );
 
       if (mounted) {
-        _showSnackBar('Profile saved successfully!');
         // Navigate to home page after successful save
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (context) => const NavigationPage()),

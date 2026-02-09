@@ -480,7 +480,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
           _githubUsername = username;
           _isGitHubLoading = false;
         });
-        _showSnackBar('GitHub account connected successfully!');
       }
     } catch (e) {
       if (mounted) {
@@ -523,7 +522,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
           _githubUsername = null;
           _isGitHubLoading = false;
         });
-        _showSnackBar('GitHub account disconnected.');
       }
     } catch (e) {
       if (mounted) {
@@ -570,7 +568,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
       });
 
       if (mounted) {
-        _showSnackBar('Profile updated successfully!');
         Navigator.pop(context);
       }
     } catch (e) {
