@@ -127,10 +127,30 @@ class _ProfilePageState extends State<ProfilePage> {
               ProfileMenu(
                 text: "Log Out",
                 icon: Icons.logout,
-                press: () async {
-                  // Delete FCM token before signing out to prevent wrong device notifications
-                  await _notificationService.deleteToken();
-                  await FirebaseAuth.instance.signOut();
+                press: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text(
+                        'Confirm to Sign Out',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            Navigator.pop(context);
+                            await _notificationService.deleteToken();
+                            await FirebaseAuth.instance.signOut();
+                          },
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
                 },
               ),
             ],
