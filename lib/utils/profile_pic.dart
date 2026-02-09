@@ -157,16 +157,13 @@ class _ProfilePicState extends State<ProfilePic> {
     }
   }
 
-  ImageProvider _getImageProvider() {
+  ImageProvider? _getImageProvider() {
     if (_selectedImage != null) {
       return FileImage(_selectedImage!);
     } else if (_profileImageUrl != null && _profileImageUrl!.isNotEmpty) {
       return NetworkImage(_profileImageUrl!);
-    } else {
-      return const NetworkImage(
-        "https://i.postimg.cc/0jqKB6mS/Profile-Image.png",
-      );
     }
+    return null;
   }
 
   @override
@@ -180,6 +177,7 @@ class _ProfilePicState extends State<ProfilePic> {
         children: [
           CircleAvatar(
             backgroundImage: _getImageProvider(),
+            backgroundColor: Colors.grey[300],
             child: _isUploading
                 ? Container(
                     decoration: BoxDecoration(
@@ -193,7 +191,9 @@ class _ProfilePicState extends State<ProfilePic> {
                       ),
                     ),
                   )
-                : null,
+                : _getImageProvider() == null
+                    ? const Icon(Icons.person, size: 50, color: Colors.white)
+                    : null,
           ),
           if (widget.showEditButton)
             Positioned(
