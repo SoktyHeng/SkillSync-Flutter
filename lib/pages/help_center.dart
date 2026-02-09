@@ -15,7 +15,6 @@ class HelpCenterPage extends StatelessWidget {
           _buildSection(
             context,
             title: 'Contact Support',
-            icon: Icons.support_agent,
             children: [
               _buildContactItem(
                 context,
@@ -37,7 +36,7 @@ class HelpCenterPage extends StatelessWidget {
           _buildSection(
             context,
             title: 'Legal',
-            icon: Icons.gavel,
+            // icon: Icons.gavel,
             children: [
               _buildResourceItem(
                 context,
@@ -69,7 +68,6 @@ class HelpCenterPage extends StatelessWidget {
   Widget _buildSection(
     BuildContext context, {
     required String title,
-    required IconData icon,
     required List<Widget> children,
   }) {
     return Card(
@@ -83,8 +81,6 @@ class HelpCenterPage extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                Icon(icon, color: Theme.of(context).primaryColor),
-                const SizedBox(width: 12),
                 Text(
                   title,
                   style: const TextStyle(

@@ -116,7 +116,7 @@ class _LoginPageState extends State<LoginPage> {
                 Text(
                   'SKILLSYNC',
                   style: TextStyle(
-                    fontSize: 30,
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: Colors.deepPurple[500],
                     letterSpacing: 2,
