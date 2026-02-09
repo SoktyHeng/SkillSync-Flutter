@@ -29,11 +29,7 @@ class HelpCenterPage extends StatelessWidget {
                 icon: Icons.chat,
                 title: 'Live Chat',
                 subtitle: 'Available 9 AM - 6 PM',
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Live chat coming soon!')),
-                  );
-                },
+                onTap: () {},
               ),
             ],
           ),
@@ -47,25 +43,13 @@ class HelpCenterPage extends StatelessWidget {
                 context,
                 icon: Icons.privacy_tip,
                 title: 'Privacy Policy',
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Privacy policy coming soon!'),
-                    ),
-                  );
-                },
+                onTap: () {},
               ),
               _buildResourceItem(
                 context,
                 icon: Icons.description,
                 title: 'Terms of Service',
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Terms of service coming soon!'),
-                    ),
-                  );
-                },
+                onTap: () {},
               ),
             ],
           ),

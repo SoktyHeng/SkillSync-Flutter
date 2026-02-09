@@ -66,20 +66,6 @@ class _RatingDialogState extends State<RatingDialog> {
 
       if (mounted) {
         Navigator.of(context).pop(true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              widget.existingRating != null
-                  ? 'Rating updated successfully'
-                  : 'Rating submitted successfully',
-            ),
-            backgroundColor: Colors.green[600],
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-        );
       }
     } catch (e) {
       if (mounted) {

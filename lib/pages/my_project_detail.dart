@@ -54,7 +54,6 @@ class _MyProjectDetailState extends State<MyProjectDetail>
         widget.projectId,
         requestId,
       );
-      _showSnackBar('Request accepted!');
     } catch (e) {
       _showSnackBar('Error: ${e.toString()}', isError: true);
     }
@@ -66,7 +65,6 @@ class _MyProjectDetailState extends State<MyProjectDetail>
         widget.projectId,
         requestId,
       );
-      _showSnackBar('Request rejected');
     } catch (e) {
       _showSnackBar('Error: ${e.toString()}', isError: true);
     }
@@ -123,7 +121,6 @@ class _MyProjectDetailState extends State<MyProjectDetail>
                 try {
                   await _projectService.deleteProject(widget.projectId);
                   if (mounted) {
-                    _showSnackBar('Project deleted successfully');
                     Navigator.pop(context);
                   }
                 } catch (e) {

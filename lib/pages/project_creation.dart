@@ -187,7 +187,6 @@ class _ProjectCreationState extends State<ProjectCreation> {
       );
 
       if (mounted) {
-        _showSnackBar('Project posted successfully!');
         Navigator.pop(context);
       }
     } catch (e) {

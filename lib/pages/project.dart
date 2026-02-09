@@ -280,7 +280,7 @@ class _ProjectPageState extends State<ProjectPage>
                 Navigator.pop(context);
                 try {
                   await _projectService.deleteProject(projectId);
-                  _showSnackBar('Project deleted successfully');
+                  // Project deleted
                 } catch (e) {
                   _showSnackBar('Error deleting project: ${e.toString()}');
                 }

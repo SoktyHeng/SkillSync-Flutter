@@ -22,16 +22,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
             icon: const Icon(Icons.done_all),
             tooltip: 'Mark all as read',
             onPressed: () async {
-              final scaffoldMessenger = ScaffoldMessenger.of(context);
               await _notificationService.markAllAsRead();
-              if (mounted) {
-                scaffoldMessenger.showSnackBar(
-                  const SnackBar(
-                    content: Text('All notifications marked as read'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              }
             },
           ),
         ],
@@ -92,16 +83,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 notificationId: doc.id,
                 data: data,
                 onDismissed: () async {
-                  final scaffoldMessenger = ScaffoldMessenger.of(context);
                   await _notificationService.deleteNotification(doc.id);
-                  if (mounted) {
-                    scaffoldMessenger.showSnackBar(
-                      const SnackBar(
-                        content: Text('Notification deleted'),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  }
                 },
                 onTap: () async {
                   if (data['isRead'] != true) {

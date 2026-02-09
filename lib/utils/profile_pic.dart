@@ -140,13 +140,6 @@ class _ProfilePicState extends State<ProfilePic> {
           _profileImageUrl = url;
           _isUploading = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Profile image updated!'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.green[600],
-          ),
-        );
       }
     } catch (e) {
       if (mounted) {
