@@ -101,7 +101,7 @@ class _MyProjectDetailState extends State<MyProjectDetail>
   void _showDeleteConfirmation() {
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -112,22 +112,24 @@ class _MyProjectDetailState extends State<MyProjectDetail>
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogContext),
               child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () async {
-                Navigator.pop(context);
+                Navigator.pop(dialogContext);
                 try {
                   await _projectService.deleteProject(widget.projectId);
                   if (mounted) {
                     Navigator.pop(context);
                   }
                 } catch (e) {
-                  _showSnackBar(
-                    'Error deleting project: ${e.toString()}',
-                    isError: true,
-                  );
+                  if (mounted) {
+                    _showSnackBar(
+                      'Error deleting project: ${e.toString()}',
+                      isError: true,
+                    );
+                  }
                 }
               },
               child: const Text('Delete', style: TextStyle(color: Colors.red)),
