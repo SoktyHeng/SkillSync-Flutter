@@ -15,6 +15,8 @@ class MainPage extends StatefulWidget {
 
 class _MainPageState extends State<MainPage> {
   bool _notificationInitialized = false;
+  Future<bool>? _setupFuture;
+  String? _currentUid;
 
   Future<bool> _checkHasCompletedSetup(String uid) async {
     final doc = await FirebaseFirestore.instance
@@ -22,6 +24,14 @@ class _MainPageState extends State<MainPage> {
         .doc(uid)
         .get();
     return doc.exists && doc.data()?['hasCompletedSetup'] == true;
+  }
+
+  Future<bool> _getSetupFuture(String uid) {
+    if (_setupFuture == null || _currentUid != uid) {
+      _currentUid = uid;
+      _setupFuture = _checkHasCompletedSetup(uid);
+    }
+    return _setupFuture!;
   }
 
   void _initializeNotifications() {
@@ -44,7 +54,7 @@ class _MainPageState extends State<MainPage> {
               _initializeNotifications();
             });
             return FutureBuilder<bool>(
-              future: _checkHasCompletedSetup(user.uid),
+              future: _getSetupFuture(user.uid),
               builder: (context, setupSnapshot) {
                 if (setupSnapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
