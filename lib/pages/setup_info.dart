@@ -47,6 +47,8 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
       labelText: label,
       hintText: hint,
       prefixIcon: Icon(icon),
+      labelStyle: TextStyle(color: isDark ? Colors.white : Colors.black),
+      hintStyle: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0)),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.0),

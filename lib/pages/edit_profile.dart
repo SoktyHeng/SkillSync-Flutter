@@ -85,6 +85,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
       labelText: label,
       hintText: hint,
       prefixIcon: Icon(icon),
+      labelStyle: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
+      hintStyle: TextStyle(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[400] : Colors.grey[600]),
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.0)),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12.0),
