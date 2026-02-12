@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:skillsync_sp2/auth/main_page.dart';
 import 'package:skillsync_sp2/pages/edit_profile.dart';
 import 'package:skillsync_sp2/pages/help_center.dart';
 import 'package:skillsync_sp2/pages/notifications_page.dart';
@@ -142,9 +143,16 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                         TextButton(
                           onPressed: () async {
-                            Navigator.pop(context);
+                            final navigator = Navigator.of(context);
+                            navigator.pop();
                             await _notificationService.deleteToken();
                             await FirebaseAuth.instance.signOut();
+                            navigator.pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                builder: (context) => const MainPage(),
+                              ),
+                              (route) => false,
+                            );
                           },
                           child: const Text('OK'),
                         ),
