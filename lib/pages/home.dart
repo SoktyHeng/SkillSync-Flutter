@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:skillsync_sp2/pages/project_detail.dart';
 import 'package:skillsync_sp2/pages/user_profile.dart';
 import 'package:skillsync_sp2/pages/saved_projects.dart';
+import 'package:skillsync_sp2/pages/user_search.dart';
 import 'package:skillsync_sp2/services/project_service.dart';
 
 class HomePage extends StatefulWidget {
@@ -101,6 +102,16 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: const Text('Discover Projects'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            tooltip: 'Search Users',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const UserSearchPage()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.bookmark_border),
             tooltip: 'Saved Projects',
