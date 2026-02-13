@@ -64,6 +64,93 @@ class ProjectService {
     }
   }
 
+  // Toggle bookmark for a project
+  Future<bool> toggleBookmark(String projectId) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('No user logged in');
+    }
+
+    final bookmarkRef = _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('bookmarks')
+        .doc(projectId);
+
+    try {
+      final doc = await bookmarkRef.get();
+      if (doc.exists) {
+        await bookmarkRef.delete();
+        return false; // unbookmarked
+      } else {
+        await bookmarkRef.set({
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+        return true; // bookmarked
+      }
+    } catch (e) {
+      debugPrint('Error toggling bookmark: $e');
+      rethrow;
+    }
+  }
+
+  // Check if a project is bookmarked
+  Future<bool> isBookmarked(String projectId) async {
+    final user = _auth.currentUser;
+    if (user == null) return false;
+
+    try {
+      final doc = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('bookmarks')
+          .doc(projectId)
+          .get();
+      return doc.exists;
+    } catch (e) {
+      debugPrint('Error checking bookmark: $e');
+      return false;
+    }
+  }
+
+  // Get all bookmarked projects
+  Future<List<Map<String, dynamic>>> getBookmarkedProjects() async {
+    final user = _auth.currentUser;
+    if (user == null) return [];
+
+    try {
+      final bookmarksSnapshot = await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('bookmarks')
+          .orderBy('createdAt', descending: true)
+          .get();
+
+      List<Map<String, dynamic>> projects = [];
+
+      for (var bookmarkDoc in bookmarksSnapshot.docs) {
+        final projectDoc = await _firestore
+            .collection('projects')
+            .doc(bookmarkDoc.id)
+            .get();
+
+        if (projectDoc.exists) {
+          final projectData = projectDoc.data()!;
+          projectData['projectId'] = projectDoc.id;
+          projects.add(projectData);
+        } else {
+          // Project was deleted, clean up bookmark
+          await bookmarkDoc.reference.delete();
+        }
+      }
+
+      return projects;
+    } catch (e) {
+      debugPrint('Error getting bookmarked projects: $e');
+      return [];
+    }
+  }
+
   // Get projects by current user
   Stream<QuerySnapshot> getMyProjects() {
     final user = _auth.currentUser;

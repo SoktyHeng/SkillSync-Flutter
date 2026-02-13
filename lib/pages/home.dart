@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:skillsync_sp2/pages/project_detail.dart';
 import 'package:skillsync_sp2/pages/user_profile.dart';
+import 'package:skillsync_sp2/pages/saved_projects.dart';
 import 'package:skillsync_sp2/services/project_service.dart';
 
 class HomePage extends StatefulWidget {
@@ -97,7 +98,23 @@ class _HomePageState extends State<HomePage> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF121212) : Colors.white,
-      appBar: AppBar(title: const Text('Discover Projects')),
+      appBar: AppBar(
+        title: const Text('Discover Projects'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bookmark_border),
+            tooltip: 'Saved Projects',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SavedProjectsPage(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       body: Column(
         children: [
           // Search Bar
