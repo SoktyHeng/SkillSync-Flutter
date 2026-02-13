@@ -51,25 +51,9 @@ class _ProjectDetailState extends State<ProjectDetail> {
         setState(() {
           _isBookmarked = isNowBookmarked;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(isNowBookmarked ? 'Project saved' : 'Project removed from saved'),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Failed to update bookmark'),
-            behavior: SnackBarBehavior.floating,
-            backgroundColor: Colors.red,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        );
-      }
+      debugPrint('Error toggling bookmark: $e');
     }
   }
 

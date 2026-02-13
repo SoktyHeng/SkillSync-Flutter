@@ -162,15 +162,6 @@ class _SavedProjectCardState extends State<_SavedProjectCard> {
   Future<void> _removeBookmark() async {
     await widget.projectService.toggleBookmark(widget.projectId);
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Project removed from saved'),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-        ),
-      );
       widget.onRemoved();
     }
   }
