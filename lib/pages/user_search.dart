@@ -3,7 +3,8 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:skillsync_sp2/pages/user_profile.dart';
+import 'package:skillsync_sp2/pages/chat_page.dart';
+import 'package:skillsync_sp2/services/chat_service.dart';
 
 class UserSearchPage extends StatefulWidget {
   const UserSearchPage({super.key});
@@ -14,6 +15,7 @@ class UserSearchPage extends StatefulWidget {
 
 class _UserSearchPageState extends State<UserSearchPage> {
   final TextEditingController _searchController = TextEditingController();
+  final ChatService _chatService = ChatService();
   List<Map<String, dynamic>> _searchResults = [];
   bool _isLoading = false;
   bool _hasSearched = false;
@@ -40,6 +42,53 @@ class _UserSearchPageState extends State<UserSearchPage> {
     _debounceTimer = Timer(const Duration(milliseconds: 300), () {
       _searchUsers(query.trim());
     });
+  }
+
+  Future<void> _openChat({
+    required String userId,
+    required String userName,
+    String? userImageUrl,
+  }) async {
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      final conversationId =
+          await _chatService.getOrCreateConversation(userId);
+
+      if (mounted) {
+        Navigator.pop(context);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ChatPage(
+              conversationId: conversationId,
+              otherUserId: userId,
+              otherUserName: userName,
+              otherUserImageUrl: userImageUrl,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Unable to start chat. Please try again.'),
+            backgroundColor: Colors.red[400],
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _searchUsers(String query) async {
@@ -168,14 +217,11 @@ class _UserSearchPageState extends State<UserSearchPage> {
                 : null,
           ),
           title: Text(name),
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => UserProfilePage(userId: user['uid']),
-              ),
-            );
-          },
+          onTap: () => _openChat(
+            userId: user['uid'],
+            userName: name,
+            userImageUrl: profileImageUrl,
+          ),
         );
       },
     );

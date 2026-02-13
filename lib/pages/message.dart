@@ -132,8 +132,15 @@ class _MessagePageState extends State<MessagePage> {
 
                 final conversationDocs = snapshot.data?.docs ?? [];
 
+                // Filter out conversations with no messages sent
+                final activeConversations = conversationDocs.where((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  final lastMessage = data['lastMessage'] as String? ?? '';
+                  return lastMessage.isNotEmpty;
+                }).toList();
+
                 // Sort conversations by lastMessageTime (newest first)
-                final conversations = conversationDocs.toList()
+                final conversations = activeConversations
                   ..sort((a, b) {
                     final aTime =
                         (a.data() as Map<String, dynamic>)['lastMessageTime']
