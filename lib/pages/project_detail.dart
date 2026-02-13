@@ -25,12 +25,36 @@ class _ProjectDetailState extends State<ProjectDetail> {
   String? _requestStatus;
   bool _isRequesting = false;
   bool _didRequestThisSession = false;
+  bool _isBookmarked = false;
 
   @override
   void initState() {
     super.initState();
     _loadCreatorInfo();
     _loadRequestStatus();
+    _loadBookmarkStatus();
+  }
+
+  Future<void> _loadBookmarkStatus() async {
+    final bookmarked = await _projectService.isBookmarked(widget.projectId);
+    if (mounted) {
+      setState(() {
+        _isBookmarked = bookmarked;
+      });
+    }
+  }
+
+  Future<void> _toggleBookmark() async {
+    try {
+      final isNowBookmarked = await _projectService.toggleBookmark(widget.projectId);
+      if (mounted) {
+        setState(() {
+          _isBookmarked = isNowBookmarked;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error toggling bookmark: $e');
+    }
   }
 
   Future<void> _loadCreatorInfo() async {
@@ -283,6 +307,16 @@ class _ProjectDetailState extends State<ProjectDetail> {
         appBar: AppBar(
           title: const Text('Project Details'),
           elevation: 0,
+          actions: [
+            IconButton(
+              icon: Icon(
+                _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                color: _isBookmarked ? Colors.deepPurple[500] : null,
+              ),
+              tooltip: _isBookmarked ? 'Remove from saved' : 'Save project',
+              onPressed: _toggleBookmark,
+            ),
+          ],
         ),
       body: SingleChildScrollView(
         child: Column(
