@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:skillsync_sp2/pages/chat_page.dart';
+import 'package:skillsync_sp2/pages/user_search.dart';
 import 'package:skillsync_sp2/services/chat_service.dart';
 
 class MessagePage extends StatefulWidget {
@@ -29,6 +30,18 @@ class _MessagePageState extends State<MessagePage> {
       appBar: AppBar(
         title: const Text('Messages'),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            tooltip: 'Search Users',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const UserSearchPage()),
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -71,96 +84,175 @@ class _MessagePageState extends State<MessagePage> {
           // Conversations List
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-        stream: _chatService.getConversations(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
-              child: CircularProgressIndicator(color: Colors.deepPurple[500]),
-            );
-          }
-
-          if (snapshot.hasError) {
-            debugPrint('Conversation error: ${snapshot.error}');
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Error loading conversations',
-                      style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+              stream: _chatService.getConversations(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(
+                    child: CircularProgressIndicator(
+                      color: Colors.deepPurple[500],
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Please check your internet connection',
-                      style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-                      textAlign: TextAlign.center,
+                  );
+                }
+
+                if (snapshot.hasError) {
+                  debugPrint('Conversation error: ${snapshot.error}');
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Error loading conversations',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Please check your internet connection',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[500],
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
-              ),
-            );
-          }
+                  );
+                }
 
-          final conversationDocs = snapshot.data?.docs ?? [];
+                final conversationDocs = snapshot.data?.docs ?? [];
 
-          // Sort conversations by lastMessageTime (newest first)
-          final conversations = conversationDocs.toList()
-            ..sort((a, b) {
-              final aTime = (a.data() as Map<String, dynamic>)['lastMessageTime']
-                  as Timestamp?;
-              final bTime = (b.data() as Map<String, dynamic>)['lastMessageTime']
-                  as Timestamp?;
-              if (aTime == null && bTime == null) return 0;
-              if (aTime == null) return 1;
-              if (bTime == null) return -1;
-              return bTime.compareTo(aTime);
-            });
+                // Filter out conversations with no messages sent
+                final activeConversations = conversationDocs.where((doc) {
+                  final data = doc.data() as Map<String, dynamic>;
+                  final lastMessage = data['lastMessage'] as String? ?? '';
+                  return lastMessage.isNotEmpty;
+                }).toList();
 
-          if (conversations.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.message_outlined, size: 80, color: Colors.grey[400]),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No conversations yet',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w500,
+                // Sort conversations by lastMessageTime (newest first)
+                final conversations = activeConversations
+                  ..sort((a, b) {
+                    final aTime =
+                        (a.data() as Map<String, dynamic>)['lastMessageTime']
+                            as Timestamp?;
+                    final bTime =
+                        (b.data() as Map<String, dynamic>)['lastMessageTime']
+                            as Timestamp?;
+                    if (aTime == null && bTime == null) return 0;
+                    if (aTime == null) return 1;
+                    if (bTime == null) return -1;
+                    return bTime.compareTo(aTime);
+                  });
+
+                if (conversations.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.message_outlined,
+                          size: 80,
+                          color: Colors.grey[400],
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No conversations yet',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Start a conversation from a user profile!',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[500],
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Start a conversation from a user profile!',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-                  ),
-                ],
-              ),
-            );
-          }
+                  );
+                }
 
-          return ListView.separated(
-            itemCount: conversations.length,
-            separatorBuilder: (context, index) =>
-                Divider(height: 1, color: Colors.grey[200]),
-            itemBuilder: (context, index) {
-              final conversation = conversations[index];
-              return _ConversationTile(
-                conversationId: conversation.id,
-                conversationData: conversation.data() as Map<String, dynamic>,
-                chatService: _chatService,
-                searchQuery: _searchQuery,
-              );
-            },
-          );
-        },
-      ),
+                return ListView.separated(
+                  itemCount: conversations.length,
+                  separatorBuilder: (context, index) =>
+                      Divider(height: 1, color: Colors.grey[200]),
+                  itemBuilder: (context, index) {
+                    final conversation = conversations[index];
+                    return Dismissible(
+                      key: Key(conversation.id),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 24),
+                        color: Colors.red,
+                        child: const Icon(
+                          Icons.delete,
+                          color: Colors.white,
+                        ),
+                      ),
+                      confirmDismiss: (direction) async {
+                        return await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Delete Conversation'),
+                            content: const Text(
+                                'Are you sure you want to delete this conversation? This cannot be undone.'),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(context, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(context, true),
+                                child: const Text(
+                                  'Delete',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      onDismissed: (direction) {
+                        _chatService.deleteConversation(conversation.id);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content:
+                                const Text('Conversation deleted'),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                          ),
+                        );
+                      },
+                      child: _ConversationTile(
+                        conversationId: conversation.id,
+                        conversationData:
+                            conversation.data() as Map<String, dynamic>,
+                        chatService: _chatService,
+                        searchQuery: _searchQuery,
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -198,8 +290,9 @@ class _ConversationTileState extends State<_ConversationTile> {
   }
 
   Future<void> _loadOtherUserInfo() async {
-    final info =
-        await widget.chatService.getOtherParticipantInfo(widget.conversationId);
+    final info = await widget.chatService.getOtherParticipantInfo(
+      widget.conversationId,
+    );
     if (mounted) {
       setState(() {
         _otherUserId = info['uid'] ?? '';
@@ -259,34 +352,25 @@ class _ConversationTileState extends State<_ConversationTile> {
                 ),
               )
             : _otherUserImageUrl == null
-                ? Icon(Icons.person, color: Colors.deepPurple[400], size: 28)
-                : null,
+            ? Icon(Icons.person, color: Colors.deepPurple[400], size: 28)
+            : null,
       ),
       title: Text(
         _otherUserName.isNotEmpty ? _otherUserName : 'Loading...',
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w600,
-        ),
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
       subtitle: Padding(
         padding: const EdgeInsets.only(top: 4),
         child: Text(
           lastMessage.isNotEmpty ? lastMessage : 'No messages yet',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[600],
-          ),
+          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
       ),
       trailing: Text(
         _getTimeAgo(lastMessageTime),
-        style: TextStyle(
-          fontSize: 12,
-          color: Colors.grey[500],
-        ),
+        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
       ),
       onTap: () {
         Navigator.push(
