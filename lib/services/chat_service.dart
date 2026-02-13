@@ -143,6 +143,29 @@ class ChatService {
         .snapshots();
   }
 
+  /// Delete a conversation and all its messages
+  Future<void> deleteConversation(String conversationId) async {
+    try {
+      final messagesSnapshot = await _firestore
+          .collection('conversations')
+          .doc(conversationId)
+          .collection('messages')
+          .get();
+
+      final batch = _firestore.batch();
+      for (final doc in messagesSnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      batch.delete(
+          _firestore.collection('conversations').doc(conversationId));
+      await batch.commit();
+      debugPrint('Conversation deleted: $conversationId');
+    } catch (e) {
+      debugPrint('Error deleting conversation: $e');
+      rethrow;
+    }
+  }
+
   /// Get information about the other participant in a conversation
   Future<Map<String, dynamic>> getOtherParticipantInfo(
       String conversationId) async {

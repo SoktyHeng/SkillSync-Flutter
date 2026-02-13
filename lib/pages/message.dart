@@ -192,12 +192,62 @@ class _MessagePageState extends State<MessagePage> {
                       Divider(height: 1, color: Colors.grey[200]),
                   itemBuilder: (context, index) {
                     final conversation = conversations[index];
-                    return _ConversationTile(
-                      conversationId: conversation.id,
-                      conversationData:
-                          conversation.data() as Map<String, dynamic>,
-                      chatService: _chatService,
-                      searchQuery: _searchQuery,
+                    return Dismissible(
+                      key: Key(conversation.id),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 24),
+                        color: Colors.red,
+                        child: const Icon(
+                          Icons.delete,
+                          color: Colors.white,
+                        ),
+                      ),
+                      confirmDismiss: (direction) async {
+                        return await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Delete Conversation'),
+                            content: const Text(
+                                'Are you sure you want to delete this conversation? This cannot be undone.'),
+                            actions: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(context, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.pop(context, true),
+                                child: const Text(
+                                  'Delete',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      onDismissed: (direction) {
+                        _chatService.deleteConversation(conversation.id);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content:
+                                const Text('Conversation deleted'),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                          ),
+                        );
+                      },
+                      child: _ConversationTile(
+                        conversationId: conversation.id,
+                        conversationData:
+                            conversation.data() as Map<String, dynamic>,
+                        chatService: _chatService,
+                        searchQuery: _searchQuery,
+                      ),
                     );
                   },
                 );
