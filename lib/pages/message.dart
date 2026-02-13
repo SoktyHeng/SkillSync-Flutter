@@ -231,15 +231,6 @@ class _MessagePageState extends State<MessagePage> {
                       },
                       onDismissed: (direction) {
                         _chatService.deleteConversation(conversation.id);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content:
-                                const Text('Conversation deleted'),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10)),
-                          ),
-                        );
                       },
                       child: _ConversationTile(
                         conversationId: conversation.id,
