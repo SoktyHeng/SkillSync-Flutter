@@ -67,7 +67,6 @@ class _ChatPageState extends State<ChatPage> {
         conversationId: widget.conversationId,
         text: text,
       );
-      _scrollToBottom();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -102,7 +101,6 @@ class _ChatPageState extends State<ChatPage> {
         conversationId: widget.conversationId,
         imageFile: File(pickedFile.path),
       );
-      _scrollToBottom();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -174,18 +172,6 @@ class _ChatPageState extends State<ChatPage> {
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
-  }
-
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
-      }
-    });
   }
 
   String _formatTime(Timestamp? timestamp) {
@@ -350,25 +336,19 @@ class _ChatPageState extends State<ChatPage> {
                   );
                 }
 
-                // Scroll to bottom when new messages arrive
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  if (_scrollController.hasClients) {
-                    _scrollController.jumpTo(
-                      _scrollController.position.maxScrollExtent,
-                    );
-                  }
-                });
-
                 return ListView.builder(
                   controller: _scrollController,
+                  reverse: true,
                   padding: const EdgeInsets.all(16),
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
+                    // Reverse index so newest messages are at the bottom
+                    final reversedIndex = messages.length - 1 - index;
                     final message =
-                        messages[index].data() as Map<String, dynamic>;
+                        messages[reversedIndex].data() as Map<String, dynamic>;
                     final isMe = message['senderId'] == currentUserId;
                     final showDateHeader =
-                        _shouldShowDateHeader(messages, index);
+                        _shouldShowDateHeader(messages, reversedIndex);
                     final timestamp = message['createdAt'] as Timestamp?;
                     final dateLabel = timestamp != null
                         ? _getDateLabel(timestamp.toDate())
