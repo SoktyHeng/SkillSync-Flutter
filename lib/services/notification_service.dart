@@ -211,7 +211,14 @@ class NotificationService {
     if (messageType == 'chat_message') {
       final conversationId = message.data['conversationId'];
       if (conversationId != null && conversationId == _activeConversationId) {
-        // Don't show notification if user is viewing this conversation
+        return;
+      }
+    }
+
+    // Check if this is a group message for the currently open group chat
+    if (messageType == 'group_message') {
+      final groupChatId = message.data['groupChatId'];
+      if (groupChatId != null && groupChatId == _activeConversationId) {
         return;
       }
     }
@@ -228,9 +235,14 @@ class NotificationService {
 
     if (notification != null) {
       // Build payload based on type
-      final payload = isProjectNotification
-          ? message.data['projectId']
-          : message.data['conversationId'];
+      String? payload;
+      if (isProjectNotification) {
+        payload = message.data['projectId'];
+      } else if (messageType == 'group_message') {
+        payload = message.data['groupChatId'];
+      } else {
+        payload = message.data['conversationId'];
+      }
 
       _localNotifications.show(
         id: notification.hashCode,

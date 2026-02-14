@@ -1,8 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:skillsync_sp2/pages/chat_page.dart';
+import 'package:skillsync_sp2/pages/group_chat_page.dart';
 import 'package:skillsync_sp2/pages/user_search.dart';
 import 'package:skillsync_sp2/services/chat_service.dart';
+import 'package:skillsync_sp2/services/group_chat_service.dart';
 
 class MessagePage extends StatefulWidget {
   const MessagePage({super.key});
@@ -11,14 +14,24 @@ class MessagePage extends StatefulWidget {
   State<MessagePage> createState() => _MessagePageState();
 }
 
-class _MessagePageState extends State<MessagePage> {
+class _MessagePageState extends State<MessagePage>
+    with SingleTickerProviderStateMixin {
   final ChatService _chatService = ChatService();
+  final GroupChatService _groupChatService = GroupChatService();
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -37,11 +50,22 @@ class _MessagePageState extends State<MessagePage> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const UserSearchPage()),
+                MaterialPageRoute(
+                    builder: (context) => const UserSearchPage()),
               );
             },
           ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: isDark ? Colors.white : Colors.deepPurple[700],
+          unselectedLabelColor: Colors.grey[500],
+          indicatorColor: Colors.deepPurple[500],
+          tabs: const [
+            Tab(text: 'Direct'),
+            Tab(text: 'Groups'),
+          ],
+        ),
       ),
       body: Column(
         children: [
@@ -57,7 +81,7 @@ class _MessagePageState extends State<MessagePage> {
                 });
               },
               decoration: InputDecoration(
-                hintText: 'Search users...',
+                hintText: 'Search conversations...',
                 hintStyle: TextStyle(color: Colors.grey[500]),
                 prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
                 suffixIcon: _searchQuery.isNotEmpty
@@ -81,168 +105,236 @@ class _MessagePageState extends State<MessagePage> {
               ),
             ),
           ),
-          // Conversations List
+          // Tab Content
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: _chatService.getConversations(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(
-                    child: CircularProgressIndicator(
-                      color: Colors.deepPurple[500],
-                    ),
-                  );
-                }
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildDirectConversations(),
+                _buildGroupConversations(),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-                if (snapshot.hasError) {
-                  debugPrint('Conversation error: ${snapshot.error}');
-                  return Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.error_outline,
-                            size: 64,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Error loading conversations',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Please check your internet connection',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[500],
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
+  Widget _buildDirectConversations() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _chatService.getConversations(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(
+              color: Colors.deepPurple[500],
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          debugPrint('Conversation error: ${snapshot.error}');
+          return _buildErrorState('Error loading conversations');
+        }
+
+        final conversationDocs = snapshot.data?.docs ?? [];
+
+        // Filter out conversations with no messages sent
+        final activeConversations = conversationDocs.where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          final lastMessage = data['lastMessage'] as String? ?? '';
+          return lastMessage.isNotEmpty;
+        }).toList();
+
+        // Sort conversations by lastMessageTime (newest first)
+        final conversations = activeConversations
+          ..sort((a, b) {
+            final aTime =
+                (a.data() as Map<String, dynamic>)['lastMessageTime']
+                    as Timestamp?;
+            final bTime =
+                (b.data() as Map<String, dynamic>)['lastMessageTime']
+                    as Timestamp?;
+            if (aTime == null && bTime == null) return 0;
+            if (aTime == null) return 1;
+            if (bTime == null) return -1;
+            return bTime.compareTo(aTime);
+          });
+
+        if (conversations.isEmpty) {
+          return _buildEmptyState(
+            Icons.message_outlined,
+            'No conversations yet',
+            'Start a conversation from a user profile!',
+          );
+        }
+
+        return ListView.separated(
+          itemCount: conversations.length,
+          separatorBuilder: (context, index) =>
+              Divider(height: 1, color: Colors.grey[200]),
+          itemBuilder: (context, index) {
+            final conversation = conversations[index];
+            return Dismissible(
+              key: Key(conversation.id),
+              direction: DismissDirection.endToStart,
+              background: Container(
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.only(right: 24),
+                color: Colors.red,
+                child: const Icon(
+                  Icons.delete,
+                  color: Colors.white,
+                ),
+              ),
+              confirmDismiss: (direction) async {
+                return await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Delete Conversation'),
+                    content: const Text(
+                        'Are you sure you want to delete this conversation? This cannot be undone.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
                       ),
-                    ),
-                  );
-                }
-
-                final conversationDocs = snapshot.data?.docs ?? [];
-
-                // Filter out conversations with no messages sent
-                final activeConversations = conversationDocs.where((doc) {
-                  final data = doc.data() as Map<String, dynamic>;
-                  final lastMessage = data['lastMessage'] as String? ?? '';
-                  return lastMessage.isNotEmpty;
-                }).toList();
-
-                // Sort conversations by lastMessageTime (newest first)
-                final conversations = activeConversations
-                  ..sort((a, b) {
-                    final aTime =
-                        (a.data() as Map<String, dynamic>)['lastMessageTime']
-                            as Timestamp?;
-                    final bTime =
-                        (b.data() as Map<String, dynamic>)['lastMessageTime']
-                            as Timestamp?;
-                    if (aTime == null && bTime == null) return 0;
-                    if (aTime == null) return 1;
-                    if (bTime == null) return -1;
-                    return bTime.compareTo(aTime);
-                  });
-
-                if (conversations.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.message_outlined,
-                          size: 80,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No conversations yet',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: Colors.grey[600],
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Start a conversation from a user profile!',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[500],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.separated(
-                  itemCount: conversations.length,
-                  separatorBuilder: (context, index) =>
-                      Divider(height: 1, color: Colors.grey[200]),
-                  itemBuilder: (context, index) {
-                    final conversation = conversations[index];
-                    return Dismissible(
-                      key: Key(conversation.id),
-                      direction: DismissDirection.endToStart,
-                      background: Container(
-                        alignment: Alignment.centerRight,
-                        padding: const EdgeInsets.only(right: 24),
-                        color: Colors.red,
-                        child: const Icon(
-                          Icons.delete,
-                          color: Colors.white,
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text(
+                          'Delete',
+                          style: TextStyle(color: Colors.red),
                         ),
                       ),
-                      confirmDismiss: (direction) async {
-                        return await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: const Text('Delete Conversation'),
-                            content: const Text(
-                                'Are you sure you want to delete this conversation? This cannot be undone.'),
-                            actions: [
-                              TextButton(
-                                onPressed: () =>
-                                    Navigator.pop(context, false),
-                                child: const Text('Cancel'),
-                              ),
-                              TextButton(
-                                onPressed: () =>
-                                    Navigator.pop(context, true),
-                                child: const Text(
-                                  'Delete',
-                                  style: TextStyle(color: Colors.red),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                      onDismissed: (direction) {
-                        _chatService.deleteConversation(conversation.id);
-                      },
-                      child: _ConversationTile(
-                        conversationId: conversation.id,
-                        conversationData:
-                            conversation.data() as Map<String, dynamic>,
-                        chatService: _chatService,
-                        searchQuery: _searchQuery,
-                      ),
-                    );
-                  },
+                    ],
+                  ),
                 );
               },
+              onDismissed: (direction) {
+                _chatService.deleteConversation(conversation.id);
+              },
+              child: _ConversationTile(
+                conversationId: conversation.id,
+                conversationData:
+                    conversation.data() as Map<String, dynamic>,
+                chatService: _chatService,
+                searchQuery: _searchQuery,
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildGroupConversations() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _groupChatService.getGroupChats(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(
+            child: CircularProgressIndicator(
+              color: Colors.deepPurple[500],
+            ),
+          );
+        }
+
+        if (snapshot.hasError) {
+          debugPrint('Group chat error: ${snapshot.error}');
+          return _buildErrorState('Error loading group chats');
+        }
+
+        final groupDocs = snapshot.data?.docs ?? [];
+
+        // Filter out groups with no messages if needed, and sort
+        final groups = groupDocs.toList()
+          ..sort((a, b) {
+            final aTime =
+                (a.data() as Map<String, dynamic>)['lastMessageTime']
+                    as Timestamp?;
+            final bTime =
+                (b.data() as Map<String, dynamic>)['lastMessageTime']
+                    as Timestamp?;
+            if (aTime == null && bTime == null) return 0;
+            if (aTime == null) return 1;
+            if (bTime == null) return -1;
+            return bTime.compareTo(aTime);
+          });
+
+        if (groups.isEmpty) {
+          return _buildEmptyState(
+            Icons.group_outlined,
+            'No group chats yet',
+            'Group chats are created when contributors join your projects.',
+          );
+        }
+
+        return ListView.separated(
+          itemCount: groups.length,
+          separatorBuilder: (context, index) =>
+              Divider(height: 1, color: Colors.grey[200]),
+          itemBuilder: (context, index) {
+            final group = groups[index];
+            final data = group.data() as Map<String, dynamic>;
+
+            return _GroupChatTile(
+              groupChatId: group.id,
+              groupData: data,
+              searchQuery: _searchQuery,
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildErrorState(String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Please check your internet connection',
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(IconData icon, String title, String subtitle) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 80, color: Colors.grey[400]),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32),
+            child: Text(
+              subtitle,
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+              textAlign: TextAlign.center,
             ),
           ),
         ],
@@ -250,6 +342,8 @@ class _MessagePageState extends State<MessagePage> {
     );
   }
 }
+
+// ─── Direct Conversation Tile ─────────────────────────────────────────────
 
 class _ConversationTile extends StatefulWidget {
   final String conversationId;
@@ -343,8 +437,8 @@ class _ConversationTileState extends State<_ConversationTile> {
                 ),
               )
             : _otherUserImageUrl == null
-            ? Icon(Icons.person, color: Colors.deepPurple[400], size: 28)
-            : null,
+                ? Icon(Icons.person, color: Colors.deepPurple[400], size: 28)
+                : null,
       ),
       title: Text(
         _otherUserName.isNotEmpty ? _otherUserName : 'Loading...',
@@ -372,6 +466,117 @@ class _ConversationTileState extends State<_ConversationTile> {
               otherUserId: _otherUserId,
               otherUserName: _otherUserName,
               otherUserImageUrl: _otherUserImageUrl,
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ─── Group Chat Tile ──────────────────────────────────────────────────────
+
+class _GroupChatTile extends StatelessWidget {
+  final String groupChatId;
+  final Map<String, dynamic> groupData;
+  final String searchQuery;
+
+  const _GroupChatTile({
+    required this.groupChatId,
+    required this.groupData,
+    required this.searchQuery,
+  });
+
+  String _getTimeAgo(Timestamp? timestamp) {
+    if (timestamp == null) return '';
+    final now = DateTime.now();
+    final date = timestamp.toDate();
+    final difference = now.difference(date);
+
+    if (difference.inDays > 7) {
+      return '${date.day}/${date.month}';
+    } else if (difference.inDays > 0) {
+      return '${difference.inDays}d';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours}h';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes}m';
+    } else {
+      return 'Now';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final groupName = groupData['name'] as String? ?? 'Group Chat';
+    final lastMessage = groupData['lastMessage'] as String? ?? '';
+    final lastMessageSenderName =
+        groupData['lastMessageSenderName'] as String? ?? '';
+    final lastMessageTime = groupData['lastMessageTime'] as Timestamp?;
+    final members = List<String>.from(groupData['members'] ?? []);
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+
+    // Filter by search query
+    if (searchQuery.isNotEmpty &&
+        !groupName.toLowerCase().contains(searchQuery)) {
+      return const SizedBox.shrink();
+    }
+
+    // Build subtitle with sender name
+    String subtitle;
+    if (lastMessage.isEmpty) {
+      subtitle = 'No messages yet';
+    } else if (lastMessageSenderName.isNotEmpty) {
+      final senderDisplay =
+          groupData['lastMessageSenderId'] == currentUserId
+              ? 'You'
+              : lastMessageSenderName;
+      subtitle = '$senderDisplay: $lastMessage';
+    } else {
+      subtitle = lastMessage;
+    }
+
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      leading: CircleAvatar(
+        radius: 28,
+        backgroundColor: Colors.deepPurple[100],
+        child: Icon(Icons.group, color: Colors.deepPurple[400], size: 28),
+      ),
+      title: Text(
+        groupName,
+        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      ),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              subtitle,
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              '${members.length} member${members.length != 1 ? 's' : ''}',
+              style: TextStyle(fontSize: 12, color: Colors.grey[400]),
+            ),
+          ],
+        ),
+      ),
+      trailing: Text(
+        _getTimeAgo(lastMessageTime),
+        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+      ),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => GroupChatPage(
+              groupChatId: groupChatId,
+              groupName: groupName,
             ),
           ),
         );
