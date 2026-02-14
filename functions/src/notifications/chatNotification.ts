@@ -28,6 +28,7 @@ export const onNewChatMessage = functions.firestore
 
     const senderId = messageData.senderId as string;
     const messageText = messageData.text as string;
+    const messageType = (messageData.type as string) || "text";
 
     console.log(`New message in conversation ${conversationId} from ${senderId}`);
 
@@ -88,9 +89,11 @@ export const onNewChatMessage = functions.firestore
       console.log(`Found ${tokens.length} FCM token(s) for recipient`);
 
       // 4. Build notification payload
-      const truncatedMessage = messageText.length > 100
-        ? messageText.substring(0, 100) + "..."
-        : messageText;
+      const truncatedMessage = messageType === "image"
+        ? "📷 Photo"
+        : messageText.length > 100
+          ? messageText.substring(0, 100) + "..."
+          : messageText;
 
       const payload: admin.messaging.MulticastMessage = {
         tokens: tokens,

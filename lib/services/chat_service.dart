@@ -1,10 +1,14 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 
 class ChatService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   String? get currentUserId => _auth.currentUser?.uid;
 
@@ -97,6 +101,7 @@ class ChatService {
       batch.set(messageRef, {
         'senderId': user.uid,
         'text': text.trim(),
+        'type': 'text',
         'createdAt': FieldValue.serverTimestamp(),
       });
 
@@ -114,6 +119,62 @@ class ChatService {
       debugPrint('Message sent successfully');
     } catch (e) {
       debugPrint('Error sending message: $e');
+      rethrow;
+    }
+  }
+
+  /// Send an image message in a conversation
+  Future<void> sendImageMessage({
+    required String conversationId,
+    required File imageFile,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('No user logged in');
+    }
+
+    try {
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final ref = _storage
+          .ref()
+          .child('chat_images/$conversationId/${timestamp}_${user.uid}.jpg');
+
+      await ref.putFile(
+        imageFile,
+        SettableMetadata(contentType: 'image/jpeg'),
+      );
+
+      final imageUrl = await ref.getDownloadURL();
+
+      final batch = _firestore.batch();
+
+      final messageRef = _firestore
+          .collection('conversations')
+          .doc(conversationId)
+          .collection('messages')
+          .doc();
+
+      batch.set(messageRef, {
+        'senderId': user.uid,
+        'text': '',
+        'type': 'image',
+        'imageUrl': imageUrl,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      final conversationRef =
+          _firestore.collection('conversations').doc(conversationId);
+      batch.update(conversationRef, {
+        'lastMessage': '📷 Photo',
+        'lastMessageTime': FieldValue.serverTimestamp(),
+        'lastMessageSenderId': user.uid,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      await batch.commit();
+      debugPrint('Image message sent successfully');
+    } catch (e) {
+      debugPrint('Error sending image message: $e');
       rethrow;
     }
   }

@@ -1,10 +1,14 @@
+import 'dart:io';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 
 class GroupChatService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   String? get currentUserId => _auth.currentUser?.uid;
 
@@ -119,6 +123,7 @@ class GroupChatService {
         'senderId': user.uid,
         'senderName': senderName,
         'text': text.trim(),
+        'type': 'text',
         'createdAt': FieldValue.serverTimestamp(),
       });
 
@@ -137,6 +142,66 @@ class GroupChatService {
       debugPrint('Group message sent successfully');
     } catch (e) {
       debugPrint('Error sending group message: $e');
+      rethrow;
+    }
+  }
+
+  /// Send an image message in a group chat
+  Future<void> sendImageMessage({
+    required String groupChatId,
+    required File imageFile,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('No user logged in');
+
+    try {
+      final userDoc =
+          await _firestore.collection('users').doc(user.uid).get();
+      final senderName = userDoc.data()?['name'] ?? 'Unknown';
+
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final ref = _storage
+          .ref()
+          .child('chat_images/groups/$groupChatId/${timestamp}_${user.uid}.jpg');
+
+      await ref.putFile(
+        imageFile,
+        SettableMetadata(contentType: 'image/jpeg'),
+      );
+
+      final imageUrl = await ref.getDownloadURL();
+
+      final batch = _firestore.batch();
+
+      final messageRef = _firestore
+          .collection('group_chats')
+          .doc(groupChatId)
+          .collection('messages')
+          .doc();
+
+      batch.set(messageRef, {
+        'senderId': user.uid,
+        'senderName': senderName,
+        'text': '',
+        'type': 'image',
+        'imageUrl': imageUrl,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      final groupChatRef =
+          _firestore.collection('group_chats').doc(groupChatId);
+      batch.update(groupChatRef, {
+        'lastMessage': '📷 Photo',
+        'lastMessageTime': FieldValue.serverTimestamp(),
+        'lastMessageSenderId': user.uid,
+        'lastMessageSenderName': senderName,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      await batch.commit();
+      debugPrint('Group image message sent successfully');
+    } catch (e) {
+      debugPrint('Error sending group image message: $e');
       rethrow;
     }
   }

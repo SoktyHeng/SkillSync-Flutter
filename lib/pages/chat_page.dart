@@ -1,9 +1,14 @@
+import 'dart:io';
+
+import 'package:any_link_preview/any_link_preview.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:skillsync_sp2/pages/user_profile.dart';
 import 'package:skillsync_sp2/services/chat_service.dart';
 import 'package:skillsync_sp2/services/notification_service.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ChatPage extends StatefulWidget {
   final String conversationId;
@@ -27,18 +32,23 @@ class _ChatPageState extends State<ChatPage> {
   final ChatService _chatService = ChatService();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final ImagePicker _imagePicker = ImagePicker();
   bool _isSending = false;
+  bool _isUploadingImage = false;
+
+  static final RegExp _urlRegex = RegExp(
+    r'https?://[^\s<>\"]+',
+    caseSensitive: false,
+  );
 
   @override
   void initState() {
     super.initState();
-    // Mark this conversation as active to suppress notifications
     NotificationService().setActiveConversation(widget.conversationId);
   }
 
   @override
   void dispose() {
-    // Clear active conversation when leaving
     NotificationService().clearActiveConversation();
     _messageController.dispose();
     _scrollController.dispose();
@@ -72,6 +82,97 @@ class _ChatPageState extends State<ChatPage> {
       }
     } finally {
       if (mounted) setState(() => _isSending = false);
+    }
+  }
+
+  Future<void> _pickAndSendImage(ImageSource source) async {
+    try {
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 80,
+      );
+
+      if (pickedFile == null) return;
+
+      setState(() => _isUploadingImage = true);
+
+      await _chatService.sendImageMessage(
+        conversationId: widget.conversationId,
+        imageFile: File(pickedFile.path),
+      );
+      _scrollToBottom();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error sending image: ${e.toString()}'),
+            backgroundColor: Colors.red[400],
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isUploadingImage = false);
+    }
+  }
+
+  void _showImagePickerSheet() {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(Icons.camera_alt, color: Colors.deepPurple[500]),
+                title: const Text('Camera'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickAndSendImage(ImageSource.camera);
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.photo_library, color: Colors.deepPurple[500]),
+                title: const Text('Gallery'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickAndSendImage(ImageSource.gallery);
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openFullScreenImage(String imageUrl) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => _FullScreenImageViewer(imageUrl: imageUrl),
+      ),
+    );
+  }
+
+  String? _extractFirstUrl(String text) {
+    final match = _urlRegex.firstMatch(text);
+    return match?.group(0);
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
   }
 
@@ -204,6 +305,13 @@ class _ChatPageState extends State<ChatPage> {
       ),
       body: Column(
         children: [
+          // Upload progress indicator
+          if (_isUploadingImage)
+            LinearProgressIndicator(
+              backgroundColor: Colors.deepPurple[100],
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.deepPurple[500]!),
+            ),
+
           // Messages List
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
@@ -289,6 +397,9 @@ class _ChatPageState extends State<ChatPage> {
   Widget _buildMessageBubble(Map<String, dynamic> message, bool isMe) {
     final timestamp = message['createdAt'] as Timestamp?;
     final timeString = _formatTime(timestamp);
+    final messageType = message['type'] as String? ?? 'text';
+    final imageUrl = message['imageUrl'] as String?;
+    final text = message['text'] as String? ?? '';
 
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -297,7 +408,6 @@ class _ChatPageState extends State<ChatPage> {
         constraints: BoxConstraints(
           maxWidth: MediaQuery.of(context).size.width * 0.75,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: isMe ? Colors.deepPurple[500] : Theme.of(context).cardColor,
           borderRadius: BorderRadius.only(
@@ -318,22 +428,167 @@ class _ChatPageState extends State<ChatPage> {
           crossAxisAlignment:
               isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
-            Text(
-              message['text'] ?? '',
-              style: TextStyle(
-                fontSize: 15,
-                color: isMe ? Colors.white : Colors.grey[800],
+            // Image content
+            if (messageType == 'image' && imageUrl != null)
+              GestureDetector(
+                onTap: () => _openFullScreenImage(imageUrl),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.only(
+                    topLeft: const Radius.circular(16),
+                    topRight: const Radius.circular(16),
+                    bottomLeft: Radius.circular(text.isEmpty && timeString.isEmpty ? (isMe ? 16 : 4) : 0),
+                    bottomRight: Radius.circular(text.isEmpty && timeString.isEmpty ? (isMe ? 4 : 16) : 0),
+                  ),
+                  child: Image.network(
+                    imageUrl,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        height: 200,
+                        alignment: Alignment.center,
+                        child: CircularProgressIndicator(
+                          value: loadingProgress.expectedTotalBytes != null
+                              ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                              : null,
+                          color: isMe ? Colors.white : Colors.deepPurple[500],
+                        ),
+                      );
+                    },
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      height: 200,
+                      alignment: Alignment.center,
+                      child: Icon(
+                        Icons.broken_image,
+                        color: isMe ? Colors.white70 : Colors.grey[400],
+                        size: 48,
+                      ),
+                    ),
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              timeString,
-              style: TextStyle(
-                fontSize: 11,
-                color: isMe ? Colors.white70 : Colors.grey[500],
+
+            // Text content
+            if (messageType == 'text' || (messageType != 'image' && text.isNotEmpty))
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                child: _buildTextWithLinks(text, isMe),
+              ),
+
+            // Link preview
+            if (messageType == 'text' && _extractFirstUrl(text) != null)
+              _buildLinkPreview(_extractFirstUrl(text)!, isMe),
+
+            // Timestamp
+            Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                bottom: 8,
+                top: messageType == 'image' && text.isEmpty ? 8 : 0,
+              ),
+              child: Text(
+                timeString,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isMe ? Colors.white70 : Colors.grey[500],
+                ),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextWithLinks(String text, bool isMe) {
+    final matches = _urlRegex.allMatches(text).toList();
+
+    if (matches.isEmpty) {
+      return Text(
+        text,
+        style: TextStyle(
+          fontSize: 15,
+          color: isMe ? Colors.white : Colors.grey[800],
+        ),
+      );
+    }
+
+    final spans = <InlineSpan>[];
+    int lastEnd = 0;
+
+    for (final match in matches) {
+      if (match.start > lastEnd) {
+        spans.add(TextSpan(
+          text: text.substring(lastEnd, match.start),
+          style: TextStyle(
+            fontSize: 15,
+            color: isMe ? Colors.white : Colors.grey[800],
+          ),
+        ));
+      }
+
+      final url = match.group(0)!;
+      spans.add(WidgetSpan(
+        child: GestureDetector(
+          onTap: () => _launchUrl(url),
+          child: Text(
+            url,
+            style: TextStyle(
+              fontSize: 15,
+              color: isMe ? Colors.white : Colors.deepPurple[700],
+              decoration: TextDecoration.underline,
+              decorationColor: isMe ? Colors.white : Colors.deepPurple[700],
+            ),
+          ),
+        ),
+      ));
+
+      lastEnd = match.end;
+    }
+
+    if (lastEnd < text.length) {
+      spans.add(TextSpan(
+        text: text.substring(lastEnd),
+        style: TextStyle(
+          fontSize: 15,
+          color: isMe ? Colors.white : Colors.grey[800],
+        ),
+      ));
+    }
+
+    return RichText(text: TextSpan(children: spans));
+  }
+
+  Widget _buildLinkPreview(String url, bool isMe) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: AnyLinkPreview(
+          link: url,
+          displayDirection: UIDirection.uiDirectionVertical,
+          bodyMaxLines: 3,
+          bodyTextOverflow: TextOverflow.ellipsis,
+          titleStyle: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: isMe ? Colors.white : Colors.grey[800],
+          ),
+          bodyStyle: TextStyle(
+            fontSize: 12,
+            color: isMe ? Colors.white70 : Colors.grey[600],
+          ),
+          backgroundColor: isMe
+              ? Colors.deepPurple[600]!
+              : Theme.of(context).cardColor,
+          borderRadius: 8,
+          boxShadow: const [],
+          errorBody: '',
+          errorTitle: '',
+          errorWidget: const SizedBox.shrink(),
         ),
       ),
     );
@@ -356,6 +611,16 @@ class _ChatPageState extends State<ChatPage> {
       child: SafeArea(
         child: Row(
           children: [
+            // Attachment button
+            IconButton(
+              onPressed: _isUploadingImage ? null : _showImagePickerSheet,
+              icon: Icon(
+                Icons.attach_file,
+                color: _isUploadingImage
+                    ? Colors.grey[400]
+                    : Colors.deepPurple[500],
+              ),
+            ),
             Expanded(
               child: TextField(
                 controller: _messageController,
@@ -397,6 +662,46 @@ class _ChatPageState extends State<ChatPage> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FullScreenImageViewer extends StatelessWidget {
+  final String imageUrl;
+
+  const _FullScreenImageViewer({required this.imageUrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        iconTheme: const IconThemeData(color: Colors.white),
+        elevation: 0,
+      ),
+      body: Center(
+        child: InteractiveViewer(
+          minScale: 0.5,
+          maxScale: 4.0,
+          child: Image.network(
+            imageUrl,
+            fit: BoxFit.contain,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return Center(
+                child: CircularProgressIndicator(
+                  value: loadingProgress.expectedTotalBytes != null
+                      ? loadingProgress.cumulativeBytesLoaded /
+                          loadingProgress.expectedTotalBytes!
+                      : null,
+                  color: Colors.white,
+                ),
+              );
+            },
+          ),
         ),
       ),
     );

@@ -29,6 +29,7 @@ export const onNewGroupChatMessage = functions.firestore
     const senderId = messageData.senderId as string;
     const senderName = messageData.senderName as string || "Someone";
     const messageText = messageData.text as string;
+    const messageType = (messageData.type as string) || "text";
 
     console.log(`New group message in ${groupChatId} from ${senderId}`);
 
@@ -87,9 +88,11 @@ export const onNewGroupChatMessage = functions.firestore
       console.log(`Found ${allTokens.length} FCM token(s) total`);
 
       // 3. Build notification payload
-      const truncatedMessage = messageText.length > 100
-        ? messageText.substring(0, 100) + "..."
-        : messageText;
+      const truncatedMessage = messageType === "image"
+        ? "📷 Photo"
+        : messageText.length > 100
+          ? messageText.substring(0, 100) + "..."
+          : messageText;
 
       const payload: admin.messaging.MulticastMessage = {
         tokens: allTokens,
