@@ -70,6 +70,19 @@ class _MyProjectDetailState extends State<MyProjectDetail>
     }
   }
 
+  Future<void> _removeContributor(String requestId, String userId) async {
+    try {
+      await _projectService.removeContributor(
+        widget.projectId,
+        requestId,
+        userId,
+      );
+      _showSnackBar('Contributor removed successfully');
+    } catch (e) {
+      _showSnackBar('Error: ${e.toString()}', isError: true);
+    }
+  }
+
   Future<void> _openEditPage() async {
     final result = await Navigator.push(
       context,
@@ -405,6 +418,7 @@ class _MyProjectDetailState extends State<MyProjectDetail>
             return _ContributorCard(
               userId: userId,
               projectService: _projectService,
+              onRemove: () => _removeContributor(contributor.id, userId),
             );
           },
         );
@@ -520,8 +534,13 @@ class _RequestCardState extends State<_RequestCard> {
 class _ContributorCard extends StatefulWidget {
   final String userId;
   final ProjectService projectService;
+  final VoidCallback onRemove;
 
-  const _ContributorCard({required this.userId, required this.projectService});
+  const _ContributorCard({
+    required this.userId,
+    required this.projectService,
+    required this.onRemove,
+  });
 
   @override
   State<_ContributorCard> createState() => _ContributorCardState();
@@ -591,7 +610,37 @@ class _ContributorCardState extends State<_ContributorCard> {
           'Contributor',
           style: TextStyle(fontSize: 13, color: Colors.green[600]),
         ),
-        trailing: Icon(Icons.check_circle, color: Colors.green[500]),
+        trailing: IconButton(
+          onPressed: () => _showRemoveDialog(context),
+          icon: Icon(Icons.remove, color: Colors.red[400]),
+          style: IconButton.styleFrom(backgroundColor: Colors.red[50]),
+        ),
+      ),
+    );
+  }
+
+  void _showRemoveDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove Contributor'),
+        content: Text(
+          'Are you sure you want to remove $_userName from this project?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              widget.onRemove();
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Remove'),
+          ),
+        ],
       ),
     );
   }
