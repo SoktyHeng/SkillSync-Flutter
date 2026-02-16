@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:skillsync_sp2/services/group_chat_service.dart';
 
 class ProjectService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -312,6 +313,17 @@ class ProjectService {
   Future<void> acceptContributionRequest(
       String projectId, String requestId) async {
     try {
+      // Get the request to find the user ID
+      final requestDoc = await _firestore
+          .collection('projects')
+          .doc(projectId)
+          .collection('requests')
+          .doc(requestId)
+          .get();
+
+      final requestUserId = requestDoc.data()?['userId'] as String?;
+
+      // Update request status
       await _firestore
           .collection('projects')
           .doc(projectId)
@@ -319,9 +331,63 @@ class ProjectService {
           .doc(requestId)
           .update({'status': 'accepted'});
       debugPrint('Contribution request accepted');
+
+      // Auto-create or update group chat for the project
+      if (requestUserId != null) {
+        await _addToProjectGroupChat(projectId, requestUserId);
+      }
     } catch (e) {
       debugPrint('Error accepting request: $e');
       rethrow;
+    }
+  }
+
+  // Add a new contributor to the project's group chat
+  Future<void> _addToProjectGroupChat(
+      String projectId, String newMemberId) async {
+    final groupChatService = GroupChatService();
+
+    try {
+      // Check if group chat already exists for this project
+      final existingGroupChat =
+          await groupChatService.getGroupChatByProjectId(projectId);
+
+      if (existingGroupChat != null) {
+        // Add the new member to the existing group chat
+        await groupChatService.addMember(existingGroupChat.id, newMemberId);
+      } else {
+        // Create a new group chat with the project owner and new contributor
+        final projectDoc =
+            await _firestore.collection('projects').doc(projectId).get();
+        final projectData = projectDoc.data();
+        if (projectData == null) return;
+
+        final ownerId = projectData['uid'] as String;
+        final projectTitle = projectData['title'] as String? ?? 'Project Chat';
+
+        // Get all existing accepted contributors
+        final acceptedRequests = await _firestore
+            .collection('projects')
+            .doc(projectId)
+            .collection('requests')
+            .where('status', isEqualTo: 'accepted')
+            .get();
+
+        final memberIds = <String>{ownerId};
+        for (final doc in acceptedRequests.docs) {
+          final userId = doc.data()['userId'] as String?;
+          if (userId != null) memberIds.add(userId);
+        }
+
+        await groupChatService.createGroupChat(
+          projectId: projectId,
+          name: projectTitle,
+          memberIds: memberIds.toList(),
+        );
+      }
+    } catch (e) {
+      // Don't rethrow - group chat creation failure shouldn't block acceptance
+      debugPrint('Error managing project group chat: $e');
     }
   }
 

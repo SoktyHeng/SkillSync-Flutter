@@ -5,36 +5,33 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:skillsync_sp2/pages/user_profile.dart';
-import 'package:skillsync_sp2/services/chat_service.dart';
+import 'package:skillsync_sp2/pages/group_info_page.dart';
+import 'package:skillsync_sp2/services/group_chat_service.dart';
 import 'package:skillsync_sp2/services/notification_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-class ChatPage extends StatefulWidget {
-  final String conversationId;
-  final String otherUserId;
-  final String otherUserName;
-  final String? otherUserImageUrl;
+class GroupChatPage extends StatefulWidget {
+  final String groupChatId;
+  final String groupName;
 
-  const ChatPage({
+  const GroupChatPage({
     super.key,
-    required this.conversationId,
-    required this.otherUserId,
-    required this.otherUserName,
-    this.otherUserImageUrl,
+    required this.groupChatId,
+    required this.groupName,
   });
 
   @override
-  State<ChatPage> createState() => _ChatPageState();
+  State<GroupChatPage> createState() => _GroupChatPageState();
 }
 
-class _ChatPageState extends State<ChatPage> {
-  final ChatService _chatService = ChatService();
+class _GroupChatPageState extends State<GroupChatPage> {
+  final GroupChatService _groupChatService = GroupChatService();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final ImagePicker _imagePicker = ImagePicker();
   bool _isSending = false;
   bool _isUploadingImage = false;
+  late String _groupName;
 
   static final RegExp _urlRegex = RegExp(
     r'https?://[^\s<>\"]+',
@@ -44,7 +41,8 @@ class _ChatPageState extends State<ChatPage> {
   @override
   void initState() {
     super.initState();
-    NotificationService().setActiveConversation(widget.conversationId);
+    _groupName = widget.groupName;
+    NotificationService().setActiveConversation(widget.groupChatId);
   }
 
   @override
@@ -63,8 +61,8 @@ class _ChatPageState extends State<ChatPage> {
     _messageController.clear();
 
     try {
-      await _chatService.sendMessage(
-        conversationId: widget.conversationId,
+      await _groupChatService.sendMessage(
+        groupChatId: widget.groupChatId,
         text: text,
       );
     } catch (e) {
@@ -97,8 +95,8 @@ class _ChatPageState extends State<ChatPage> {
 
       setState(() => _isUploadingImage = true);
 
-      await _chatService.sendImageMessage(
-        conversationId: widget.conversationId,
+      await _groupChatService.sendImageMessage(
+        groupChatId: widget.groupChatId,
         imageFile: File(pickedFile.path),
       );
     } catch (e) {
@@ -231,7 +229,9 @@ class _ChatPageState extends State<ChatPage> {
         margin: const EdgeInsets.symmetric(vertical: 16),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800] : Colors.grey[200],
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.grey[800]
+              : Colors.grey[200],
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
@@ -249,38 +249,42 @@ class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
     final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-
     final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       backgroundColor: isDark ? null : Colors.grey[50],
       appBar: AppBar(
         title: GestureDetector(
-          onTap: () {
-            Navigator.push(
+          onTap: () async {
+            final result = await Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => UserProfilePage(userId: widget.otherUserId),
+                builder: (context) => GroupInfoPage(
+                  groupChatId: widget.groupChatId,
+                ),
               ),
             );
+            if (!mounted) return;
+            if (result is String && result != 'left' && result != 'deleted') {
+              setState(() => _groupName = result);
+            } else if (result == 'left' || result == 'deleted') {
+              Navigator.pop(context);
+            }
           },
           child: Row(
             children: [
               CircleAvatar(
                 radius: 18,
                 backgroundColor: Colors.deepPurple[100],
-                backgroundImage: widget.otherUserImageUrl != null
-                    ? NetworkImage(widget.otherUserImageUrl!)
-                    : null,
-                child: widget.otherUserImageUrl == null
-                    ? Icon(Icons.person, color: Colors.deepPurple[400], size: 18)
-                    : null,
+                child:
+                    Icon(Icons.group, color: Colors.deepPurple[400], size: 18),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
-                  widget.otherUserName,
-                  style:
-                      const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                  _groupName,
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w600),
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -301,12 +305,13 @@ class _ChatPageState extends State<ChatPage> {
           // Messages List
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: _chatService.getMessages(widget.conversationId),
+              stream:
+                  _groupChatService.getMessages(widget.groupChatId),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(
-                    child:
-                        CircularProgressIndicator(color: Colors.deepPurple[500]),
+                    child: CircularProgressIndicator(
+                        color: Colors.deepPurple[500]),
                   );
                 }
 
@@ -327,7 +332,7 @@ class _ChatPageState extends State<ChatPage> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Say hello to ${widget.otherUserName}!',
+                          'Start the conversation!',
                           style:
                               TextStyle(fontSize: 14, color: Colors.grey[500]),
                         ),
@@ -342,7 +347,6 @@ class _ChatPageState extends State<ChatPage> {
                   padding: const EdgeInsets.all(16),
                   itemCount: messages.length,
                   itemBuilder: (context, index) {
-                    // Reverse index so newest messages are at the bottom
                     final reversedIndex = messages.length - 1 - index;
                     final message =
                         messages[reversedIndex].data() as Map<String, dynamic>;
@@ -354,11 +358,19 @@ class _ChatPageState extends State<ChatPage> {
                         ? _getDateLabel(timestamp.toDate())
                         : '';
 
+                    // Check if previous message was from same sender
+                    final showSenderName = !isMe &&
+                        (reversedIndex == 0 ||
+                            (messages[reversedIndex - 1].data()
+                                    as Map<String, dynamic>)['senderId'] !=
+                                message['senderId'] ||
+                            showDateHeader);
+
                     return Column(
                       children: [
                         if (showDateHeader && dateLabel.isNotEmpty)
                           _buildDateHeader(dateLabel),
-                        _buildMessageBubble(message, isMe),
+                        _buildMessageBubble(message, isMe, showSenderName),
                       ],
                     );
                   },
@@ -368,15 +380,17 @@ class _ChatPageState extends State<ChatPage> {
           ),
 
           // Message Input
-          _buildMessageInput(),
+          _buildMessageInput(isDark),
         ],
       ),
     );
   }
 
-  Widget _buildMessageBubble(Map<String, dynamic> message, bool isMe) {
+  Widget _buildMessageBubble(
+      Map<String, dynamic> message, bool isMe, bool showSenderName) {
     final timestamp = message['createdAt'] as Timestamp?;
     final timeString = _formatTime(timestamp);
+    final senderName = message['senderName'] as String? ?? 'Unknown';
     final messageType = message['type'] as String? ?? 'text';
     final imageUrl = message['imageUrl'] as String?;
     final text = message['text'] as String? ?? '';
@@ -408,42 +422,57 @@ class _ChatPageState extends State<ChatPage> {
           crossAxisAlignment:
               isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
+            // Sender name
+            if (showSenderName)
+              Padding(
+                padding: const EdgeInsets.only(left: 16, right: 16, top: 10),
+                child: Text(
+                  senderName,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isMe ? Colors.white70 : Colors.deepPurple[400],
+                  ),
+                ),
+              ),
+
             // Image content
             if (messageType == 'image' && imageUrl != null)
               GestureDetector(
                 onTap: () => _openFullScreenImage(imageUrl),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.only(
-                    topLeft: const Radius.circular(16),
-                    topRight: const Radius.circular(16),
-                    bottomLeft: Radius.circular(text.isEmpty && timeString.isEmpty ? (isMe ? 16 : 4) : 0),
-                    bottomRight: Radius.circular(text.isEmpty && timeString.isEmpty ? (isMe ? 4 : 16) : 0),
-                  ),
-                  child: Image.network(
-                    imageUrl,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (context, child, loadingProgress) {
-                      if (loadingProgress == null) return child;
-                      return Container(
+                child: Padding(
+                  padding: EdgeInsets.only(top: showSenderName ? 4 : 0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(showSenderName ? 0 : 16),
+                      topRight: Radius.circular(showSenderName ? 0 : 16),
+                    ),
+                    child: Image.network(
+                      imageUrl,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          height: 200,
+                          alignment: Alignment.center,
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                    loadingProgress.expectedTotalBytes!
+                                : null,
+                            color: isMe ? Colors.white : Colors.deepPurple[500],
+                          ),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) => Container(
                         height: 200,
                         alignment: Alignment.center,
-                        child: CircularProgressIndicator(
-                          value: loadingProgress.expectedTotalBytes != null
-                              ? loadingProgress.cumulativeBytesLoaded /
-                                  loadingProgress.expectedTotalBytes!
-                              : null,
-                          color: isMe ? Colors.white : Colors.deepPurple[500],
+                        child: Icon(
+                          Icons.broken_image,
+                          color: isMe ? Colors.white70 : Colors.grey[400],
+                          size: 48,
                         ),
-                      );
-                    },
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      height: 200,
-                      alignment: Alignment.center,
-                      child: Icon(
-                        Icons.broken_image,
-                        color: isMe ? Colors.white70 : Colors.grey[400],
-                        size: 48,
                       ),
                     ),
                   ),
@@ -453,7 +482,12 @@ class _ChatPageState extends State<ChatPage> {
             // Text content
             if (messageType == 'text' || (messageType != 'image' && text.isNotEmpty))
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  top: showSenderName ? 4 : 10,
+                  bottom: 0,
+                ),
                 child: _buildTextWithLinks(text, isMe),
               ),
 
@@ -467,7 +501,7 @@ class _ChatPageState extends State<ChatPage> {
                 left: 16,
                 right: 16,
                 bottom: 8,
-                top: messageType == 'image' && text.isEmpty ? 8 : 0,
+                top: messageType == 'image' && text.isEmpty ? 8 : 4,
               ),
               child: Text(
                 timeString,
@@ -574,8 +608,7 @@ class _ChatPageState extends State<ChatPage> {
     );
   }
 
-  Widget _buildMessageInput() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  Widget _buildMessageInput(bool isDark) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(

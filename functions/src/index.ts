@@ -6,3 +6,4 @@ admin.initializeApp();
 // Export all functions
 export {onNewChatMessage} from "./notifications/chatNotification";
 export {onContributionRequest, onRequestStatusChange} from "./notifications/projectNotification";
+export {onNewGroupChatMessage} from "./notifications/groupChatNotification";
