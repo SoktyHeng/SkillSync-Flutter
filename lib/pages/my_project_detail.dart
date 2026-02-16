@@ -612,7 +612,7 @@ class _ContributorCardState extends State<_ContributorCard> {
         ),
         trailing: IconButton(
           onPressed: () => _showRemoveDialog(context),
-          icon: Icon(Icons.person_remove, color: Colors.red[400]),
+          icon: Icon(Icons.remove, color: Colors.red[400]),
           style: IconButton.styleFrom(backgroundColor: Colors.red[50]),
         ),
       ),
