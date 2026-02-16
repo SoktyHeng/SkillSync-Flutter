@@ -408,6 +408,32 @@ class ProjectService {
     }
   }
 
+  // Remove a contributor from the project and its group chat
+  Future<void> removeContributor(
+      String projectId, String requestId, String userId) async {
+    try {
+      // Delete the request document
+      await _firestore
+          .collection('projects')
+          .doc(projectId)
+          .collection('requests')
+          .doc(requestId)
+          .delete();
+      debugPrint('Contributor removed from project');
+
+      // Also remove from the project's group chat
+      final groupChatService = GroupChatService();
+      final existingGroupChat =
+          await groupChatService.getGroupChatByProjectId(projectId);
+      if (existingGroupChat != null) {
+        await groupChatService.removeMember(existingGroupChat.id, userId);
+      }
+    } catch (e) {
+      debugPrint('Error removing contributor: $e');
+      rethrow;
+    }
+  }
+
   // Check if current user has already requested to contribute
   Future<String?> getRequestStatus(String projectId) async {
     final user = _auth.currentUser;
