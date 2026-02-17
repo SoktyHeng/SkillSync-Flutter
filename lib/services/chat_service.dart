@@ -179,14 +179,31 @@ class ChatService {
     }
   }
 
-  /// Get real-time stream of messages for a conversation
-  Stream<QuerySnapshot> getMessages(String conversationId) {
+  /// Get real-time stream of latest messages for a conversation
+  Stream<QuerySnapshot> getMessages(String conversationId, {int limit = 30}) {
     return _firestore
         .collection('conversations')
         .doc(conversationId)
         .collection('messages')
-        .orderBy('createdAt', descending: false)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
         .snapshots();
+  }
+
+  /// Get older messages before a given document for pagination
+  Future<QuerySnapshot> getOlderMessages(
+    String conversationId, {
+    required DocumentSnapshot lastDoc,
+    int limit = 30,
+  }) {
+    return _firestore
+        .collection('conversations')
+        .doc(conversationId)
+        .collection('messages')
+        .orderBy('createdAt', descending: true)
+        .startAfterDocument(lastDoc)
+        .limit(limit)
+        .get();
   }
 
   /// Get real-time stream of all conversations for the current user

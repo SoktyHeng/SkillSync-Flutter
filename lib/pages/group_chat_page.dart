@@ -33,6 +33,12 @@ class _GroupChatPageState extends State<GroupChatPage> {
   bool _isUploadingImage = false;
   late String _groupName;
 
+  // Pagination state for older messages
+  final List<DocumentSnapshot> _olderMessages = [];
+  bool _isLoadingOlder = false;
+  bool _hasMoreOlder = true;
+  DocumentSnapshot? _oldestStreamDoc;
+
   static final RegExp _urlRegex = RegExp(
     r'https?://[^\s<>\"]+',
     caseSensitive: false,
@@ -43,6 +49,7 @@ class _GroupChatPageState extends State<GroupChatPage> {
     super.initState();
     _groupName = widget.groupName;
     NotificationService().setActiveConversation(widget.groupChatId);
+    _scrollController.addListener(_onScroll);
   }
 
   @override
@@ -51,6 +58,39 @@ class _GroupChatPageState extends State<GroupChatPage> {
     _messageController.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200 &&
+        !_isLoadingOlder &&
+        _hasMoreOlder) {
+      _loadOlderMessages();
+    }
+  }
+
+  Future<void> _loadOlderMessages() async {
+    if (_isLoadingOlder || !_hasMoreOlder) return;
+
+    final DocumentSnapshot? oldestDoc =
+        _olderMessages.isNotEmpty ? _olderMessages.last : _oldestStreamDoc;
+    if (oldestDoc == null) return;
+
+    setState(() => _isLoadingOlder = true);
+
+    try {
+      final snapshot = await _groupChatService.getOlderMessages(
+        widget.groupChatId,
+        lastDoc: oldestDoc,
+      );
+      setState(() {
+        _olderMessages.addAll(snapshot.docs);
+        _hasMoreOlder = snapshot.docs.length >= 30;
+        _isLoadingOlder = false;
+      });
+    } catch (e) {
+      setState(() => _isLoadingOlder = false);
+    }
   }
 
   Future<void> _sendMessage() async {
@@ -204,25 +244,6 @@ class _GroupChatPageState extends State<GroupChatPage> {
     }
   }
 
-  bool _shouldShowDateHeader(List<QueryDocumentSnapshot> messages, int index) {
-    if (index == 0) return true;
-
-    final currentData = messages[index].data() as Map<String, dynamic>;
-    final previousData = messages[index - 1].data() as Map<String, dynamic>;
-
-    final currentTime = currentData['createdAt'] as Timestamp?;
-    final previousTime = previousData['createdAt'] as Timestamp?;
-
-    if (currentTime == null) return false;
-    if (previousTime == null) return true;
-
-    final currentDate = currentTime.toDate();
-    final previousDate = previousTime.toDate();
-
-    return DateTime(currentDate.year, currentDate.month, currentDate.day) !=
-        DateTime(previousDate.year, previousDate.month, previousDate.day);
-  }
-
   Widget _buildDateHeader(String label) {
     return Center(
       child: Container(
@@ -308,16 +329,23 @@ class _GroupChatPageState extends State<GroupChatPage> {
               stream:
                   _groupChatService.getMessages(widget.groupChatId),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (snapshot.connectionState == ConnectionState.waiting &&
+                    _olderMessages.isEmpty) {
                   return Center(
                     child: CircularProgressIndicator(
                         color: Colors.deepPurple[500]),
                   );
                 }
 
-                final messages = snapshot.data?.docs ?? [];
+                final streamDocs = snapshot.data?.docs ?? [];
 
-                if (messages.isEmpty) {
+                if (streamDocs.isNotEmpty) {
+                  _oldestStreamDoc = streamDocs.last;
+                }
+
+                final allDocs = [...streamDocs, ..._olderMessages];
+
+                if (allDocs.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -341,36 +369,71 @@ class _GroupChatPageState extends State<GroupChatPage> {
                   );
                 }
 
+                final totalCount =
+                    allDocs.length + (_isLoadingOlder ? 1 : 0);
+
                 return ListView.builder(
                   controller: _scrollController,
                   reverse: true,
                   padding: const EdgeInsets.all(16),
-                  itemCount: messages.length,
+                  itemCount: totalCount,
                   itemBuilder: (context, index) {
-                    final reversedIndex = messages.length - 1 - index;
+                    if (index >= allDocs.length) {
+                      return const Padding(
+                        padding: EdgeInsets.all(16),
+                        child: Center(
+                          child: SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        ),
+                      );
+                    }
+
                     final message =
-                        messages[reversedIndex].data() as Map<String, dynamic>;
+                        allDocs[index].data() as Map<String, dynamic>;
                     final isMe = message['senderId'] == currentUserId;
-                    final showDateHeader =
-                        _shouldShowDateHeader(messages, reversedIndex);
+
+                    // Date header logic for reversed list
+                    bool showDateHeader = index == allDocs.length - 1;
+                    if (!showDateHeader && index < allDocs.length - 1) {
+                      final currentTime =
+                          message['createdAt'] as Timestamp?;
+                      final olderMessage =
+                          allDocs[index + 1].data() as Map<String, dynamic>;
+                      final olderTime =
+                          olderMessage['createdAt'] as Timestamp?;
+                      if (currentTime != null && olderTime != null) {
+                        final currentDate = currentTime.toDate();
+                        final olderDate = olderTime.toDate();
+                        showDateHeader = DateTime(currentDate.year,
+                                currentDate.month, currentDate.day) !=
+                            DateTime(olderDate.year, olderDate.month,
+                                olderDate.day);
+                      } else if (currentTime != null) {
+                        showDateHeader = true;
+                      }
+                    }
+
+                    // Show sender name when different from next message (older)
+                    final showSenderName = !isMe &&
+                        (index == allDocs.length - 1 ||
+                            (allDocs[index + 1].data()
+                                    as Map<String, dynamic>)['senderId'] !=
+                                message['senderId'] ||
+                            showDateHeader);
+
                     final timestamp = message['createdAt'] as Timestamp?;
                     final dateLabel = timestamp != null
                         ? _getDateLabel(timestamp.toDate())
                         : '';
 
-                    // Check if previous message was from same sender
-                    final showSenderName = !isMe &&
-                        (reversedIndex == 0 ||
-                            (messages[reversedIndex - 1].data()
-                                    as Map<String, dynamic>)['senderId'] !=
-                                message['senderId'] ||
-                            showDateHeader);
-
                     return Column(
                       children: [
+                        _buildMessageBubble(message, isMe, showSenderName),
                         if (showDateHeader && dateLabel.isNotEmpty)
                           _buildDateHeader(dateLabel),
-                        _buildMessageBubble(message, isMe, showSenderName),
                       ],
                     );
                   },

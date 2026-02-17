@@ -18,6 +18,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final ProjectService _projectService = ProjectService();
   final TextEditingController _searchController = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
   String _searchQuery = '';
   String _selectedDuration = 'All';
 
@@ -30,10 +31,77 @@ class _HomePageState extends State<HomePage> {
     '3+ months',
   ];
 
+  // Pagination state
+  final List<DocumentSnapshot> _projects = [];
+  DocumentSnapshot? _lastDoc;
+  bool _isLoading = false;
+  bool _isLoadingMore = false;
+  bool _hasMore = true;
+  static const int _pageSize = 10;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProjects();
+    _scrollController.addListener(_onScroll);
+  }
+
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200 &&
+        !_isLoadingMore &&
+        _hasMore) {
+      _loadMoreProjects();
+    }
+  }
+
+  Future<void> _loadProjects() async {
+    if (_isLoading) return;
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final snapshot = await _projectService.getProjectsPaginated(
+        limit: _pageSize,
+      );
+      setState(() {
+        _projects.clear();
+        _projects.addAll(snapshot.docs);
+        _lastDoc = snapshot.docs.isNotEmpty ? snapshot.docs.last : null;
+        _hasMore = snapshot.docs.length >= _pageSize;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _loadMoreProjects() async {
+    if (_isLoadingMore || !_hasMore || _lastDoc == null) return;
+    setState(() => _isLoadingMore = true);
+
+    try {
+      final snapshot = await _projectService.getProjectsPaginated(
+        limit: _pageSize,
+        lastDoc: _lastDoc,
+      );
+      setState(() {
+        _projects.addAll(snapshot.docs);
+        _lastDoc = snapshot.docs.isNotEmpty ? snapshot.docs.last : null;
+        _hasMore = snapshot.docs.length >= _pageSize;
+        _isLoadingMore = false;
+      });
+    } catch (e) {
+      setState(() => _isLoadingMore = false);
+    }
   }
 
   bool _matchesSearchQuery(Map<String, dynamic> project) {
@@ -225,114 +293,100 @@ class _HomePageState extends State<HomePage> {
 
           // Projects List
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: _projectService.getAllProjects(),
-              builder: (context, snapshot) {
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(
-                    child: CircularProgressIndicator(
-                      color: Colors.deepPurple[500],
-                    ),
-                  );
-                }
-
-                final allProjects = snapshot.data?.docs ?? [];
-                final currentUserId = FirebaseAuth.instance.currentUser?.uid;
-
-                // Filter out current user's projects and apply filters
-                final projects = allProjects.where((doc) {
-                  final data = doc.data() as Map<String, dynamic>;
-
-                  // Exclude current user's projects
-                  if (data['uid'] == currentUserId) return false;
-
-                  // Apply search filter
-                  if (!_matchesSearchQuery(data)) return false;
-
-                  // Apply duration filter
-                  if (_selectedDuration != 'All') {
-                    final duration = data['duration'] as String?;
-                    if (!_matchesDurationFilter(duration)) {
-                      return false;
-                    }
-                  }
-
-                  return true;
-                }).toList();
-
-                if (projects.isEmpty) {
-                  String emptyMessage;
-                  String emptySubtitle;
-
-                  if (_searchQuery.isNotEmpty) {
-                    emptyMessage = 'No projects found for "$_searchQuery"';
-                    emptySubtitle = 'Try a different search term';
-                  } else if (_selectedDuration != 'All') {
-                    emptyMessage =
-                        'No projects with $_selectedDuration duration';
-                    emptySubtitle = 'Try a different duration filter';
-                  } else {
-                    emptyMessage = 'No projects yet';
-                    emptySubtitle = 'Check back later for new projects!';
-                  }
-
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.search_off,
-                          size: 80,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 32),
-                          child: Text(
-                            emptyMessage,
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.grey[600],
-                              fontWeight: FontWeight.w500,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          emptySubtitle,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.grey[500],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: projects.length,
-                  itemBuilder: (context, index) {
-                    final project =
-                        projects[index].data() as Map<String, dynamic>;
-                    final projectId = projects[index].id;
-                    return _ProjectFeedCard(
-                      project: project,
-                      projectId: projectId,
-                      projectService: _projectService,
-                    );
-                  },
-                );
-              },
-            ),
+            child: _buildProjectsList(),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildProjectsList() {
+    if (_isLoading) {
+      return Center(
+        child: CircularProgressIndicator(color: Colors.deepPurple[500]),
+      );
+    }
+
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+
+    // Apply client-side filters
+    final filteredProjects = _projects.where((doc) {
+      final data = doc.data() as Map<String, dynamic>;
+      if (data['uid'] == currentUserId) return false;
+      if (!_matchesSearchQuery(data)) return false;
+      if (_selectedDuration != 'All') {
+        final duration = data['duration'] as String?;
+        if (!_matchesDurationFilter(duration)) return false;
+      }
+      return true;
+    }).toList();
+
+    if (filteredProjects.isEmpty) {
+      String emptyMessage;
+      String emptySubtitle;
+
+      if (_searchQuery.isNotEmpty) {
+        emptyMessage = 'No projects found for "$_searchQuery"';
+        emptySubtitle = 'Try a different search term';
+      } else if (_selectedDuration != 'All') {
+        emptyMessage = 'No projects with $_selectedDuration duration';
+        emptySubtitle = 'Try a different duration filter';
+      } else {
+        emptyMessage = 'No projects yet';
+        emptySubtitle = 'Check back later for new projects!';
+      }
+
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.search_off, size: 80, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                emptyMessage,
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.grey[600],
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              emptySubtitle,
+              style: TextStyle(fontSize: 14, color: Colors.grey[500]),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadProjects,
+      color: Colors.deepPurple[500],
+      child: ListView.builder(
+        controller: _scrollController,
+        padding: const EdgeInsets.all(16),
+        itemCount: filteredProjects.length + (_hasMore ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index >= filteredProjects.length) {
+            return const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(child: CircularProgressIndicator()),
+            );
+          }
+          final project =
+              filteredProjects[index].data() as Map<String, dynamic>;
+          final projectId = filteredProjects[index].id;
+          return _ProjectFeedCard(
+            project: project,
+            projectId: projectId,
+            projectService: _projectService,
+          );
+        },
       ),
     );
   }
