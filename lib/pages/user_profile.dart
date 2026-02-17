@@ -57,7 +57,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
             content: Text('Error loading profile: ${e.toString()}'),
             backgroundColor: Colors.red[400],
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
@@ -81,12 +83,14 @@ class _UserProfilePageState extends State<UserProfilePage> {
   }
 
   Future<void> _openGitHub() async {
-    final githubUrl = _userData?['githubUrl'];
-    if (githubUrl != null && githubUrl.toString().isNotEmpty) {
-      final uri = Uri.parse(githubUrl);
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+    var githubUrl = _userData?['githubUrl']?.toString() ?? '';
+    if (githubUrl.isNotEmpty) {
+      if (!githubUrl.startsWith('http://') &&
+          !githubUrl.startsWith('https://')) {
+        githubUrl = 'https://$githubUrl';
       }
+      final uri = Uri.parse(githubUrl);
+      await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
     }
   }
 
@@ -95,13 +99,12 @@ class _UserProfilePageState extends State<UserProfilePage> {
       showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (context) => const Center(
-          child: CircularProgressIndicator(),
-        ),
+        builder: (context) => const Center(child: CircularProgressIndicator()),
       );
 
-      final conversationId =
-          await _chatService.getOrCreateConversation(widget.userId);
+      final conversationId = await _chatService.getOrCreateConversation(
+        widget.userId,
+      );
 
       if (mounted) {
         Navigator.pop(context);
@@ -123,15 +126,17 @@ class _UserProfilePageState extends State<UserProfilePage> {
         String errorMessage = 'Unable to start chat. Please try again.';
         if (e.toString().contains('timeout') ||
             e.toString().contains('unavailable')) {
-          errorMessage = 'Connection issue. Please check your internet and try again.';
+          errorMessage =
+              'Connection issue. Please check your internet and try again.';
         }
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
             backgroundColor: Colors.red[400],
             behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
             action: SnackBarAction(
               label: 'Retry',
               textColor: Colors.white,
@@ -165,27 +170,27 @@ class _UserProfilePageState extends State<UserProfilePage> {
               child: CircularProgressIndicator(color: Colors.deepPurple[500]),
             )
           : _userData == null
-              ? const Center(child: Text('User not found'))
-              : SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Profile Header
-                      _buildProfileHeader(),
+          ? const Center(child: Text('User not found'))
+          : SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Profile Header
+                  _buildProfileHeader(),
 
-                      // About Section
-                      _buildAboutSection(),
+                  // About Section
+                  _buildAboutSection(),
 
-                      // Skills Section
-                      _buildSkillsSection(),
+                  // Skills Section
+                  _buildSkillsSection(),
 
-                      // Reviews Section
-                      _buildReviewsSection(),
+                  // Reviews Section
+                  _buildReviewsSection(),
 
-                      const SizedBox(height: 100),
-                    ],
-                  ),
-                ),
+                  const SizedBox(height: 100),
+                ],
+              ),
+            ),
       bottomNavigationBar: _isOwnProfile || _isLoading || _userData == null
           ? null
           : _buildRateButton(),
@@ -202,7 +207,11 @@ class _UserProfilePageState extends State<UserProfilePage> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
-        border: Border(bottom: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[200]!)),
+        border: Border(
+          bottom: BorderSide(
+            color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
+          ),
+        ),
       ),
       child: Column(
         children: [
@@ -213,20 +222,13 @@ class _UserProfilePageState extends State<UserProfilePage> {
                 ? NetworkImage(_userData!['profileImageUrl'])
                 : null,
             child: _userData?['profileImageUrl'] == null
-                ? Icon(
-                    Icons.person,
-                    size: 50,
-                    color: Colors.deepPurple[400],
-                  )
+                ? Icon(Icons.person, size: 50, color: Colors.deepPurple[400])
                 : null,
           ),
           const SizedBox(height: 16),
           Text(
             _userData?['name'] ?? 'Unknown User',
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Row(
@@ -235,7 +237,9 @@ class _UserProfilePageState extends State<UserProfilePage> {
               StarRating(rating: averageRating, size: 20),
               const SizedBox(width: 8),
               Text(
-                averageRating > 0 ? averageRating.toStringAsFixed(1) : 'No ratings',
+                averageRating > 0
+                    ? averageRating.toStringAsFixed(1)
+                    : 'No ratings',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -245,10 +249,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
               if (totalRatings > 0) ...[
                 Text(
                   ' ($totalRatings ${totalRatings == 1 ? 'review' : 'reviews'})',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[500],
-                  ),
+                  style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                 ),
               ],
             ],
@@ -267,8 +268,12 @@ class _UserProfilePageState extends State<UserProfilePage> {
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
         border: Border(
-          top: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
-          bottom: BorderSide(color: isDark ? Colors.grey[800]! : Colors.grey[200]!),
+          top: BorderSide(
+            color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
+          ),
+          bottom: BorderSide(
+            color: isDark ? Colors.grey[800]! : Colors.grey[200]!,
+          ),
         ),
       ),
       child: Column(
@@ -276,10 +281,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
         children: [
           const Text(
             'About',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           _buildInfoRow(Icons.school_outlined, 'Major', _userData?['major']),
@@ -309,12 +311,6 @@ class _UserProfilePageState extends State<UserProfilePage> {
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    Icons.open_in_new,
-                    size: 16,
-                    color: Colors.deepPurple[500],
-                  ),
                 ],
               ),
             ),
@@ -331,17 +327,11 @@ class _UserProfilePageState extends State<UserProfilePage> {
         const SizedBox(width: 12),
         Text(
           '$label: ',
-          style: TextStyle(
-            fontSize: 15,
-            color: Colors.grey[600],
-          ),
+          style: TextStyle(fontSize: 15, color: Colors.grey[600]),
         ),
         Text(
           value ?? 'Not specified',
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-          ),
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
         ),
       ],
     );
@@ -357,10 +347,20 @@ class _UserProfilePageState extends State<UserProfilePage> {
       margin: const EdgeInsets.only(top: 12),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1E1E1E)
+            : Colors.white,
         border: Border(
-          top: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800]! : Colors.grey[200]!),
-          bottom: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800]! : Colors.grey[200]!),
+          top: BorderSide(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey[800]!
+                : Colors.grey[200]!,
+          ),
+          bottom: BorderSide(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey[800]!
+                : Colors.grey[200]!,
+          ),
         ),
       ),
       child: Column(
@@ -368,10 +368,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
         children: [
           const Text(
             'Skills',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           Wrap(
@@ -379,7 +376,10 @@ class _UserProfilePageState extends State<UserProfilePage> {
             runSpacing: 8,
             children: skills.map((skill) {
               return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.deepPurple[50],
                   borderRadius: BorderRadius.circular(20),
@@ -407,10 +407,20 @@ class _UserProfilePageState extends State<UserProfilePage> {
       margin: const EdgeInsets.only(top: 12),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Theme.of(context).brightness == Brightness.dark ? const Color(0xFF1E1E1E) : Colors.white,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? const Color(0xFF1E1E1E)
+            : Colors.white,
         border: Border(
-          top: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800]! : Colors.grey[200]!),
-          bottom: BorderSide(color: Theme.of(context).brightness == Brightness.dark ? Colors.grey[800]! : Colors.grey[200]!),
+          top: BorderSide(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey[800]!
+                : Colors.grey[200]!,
+          ),
+          bottom: BorderSide(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.grey[800]!
+                : Colors.grey[200]!,
+          ),
         ),
       ),
       child: Column(
@@ -418,10 +428,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
         children: [
           const Text(
             'Reviews',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 16),
           StreamBuilder<QuerySnapshot>(
@@ -466,8 +473,12 @@ class _UserProfilePageState extends State<UserProfilePage> {
               // Sort reviews by createdAt descending (newest first)
               final reviews = snapshot.data!.docs.toList()
                 ..sort((a, b) {
-                  final aTime = (a.data() as Map<String, dynamic>)['createdAt'] as Timestamp?;
-                  final bTime = (b.data() as Map<String, dynamic>)['createdAt'] as Timestamp?;
+                  final aTime =
+                      (a.data() as Map<String, dynamic>)['createdAt']
+                          as Timestamp?;
+                  final bTime =
+                      (b.data() as Map<String, dynamic>)['createdAt']
+                          as Timestamp?;
                   if (aTime == null || bTime == null) return 0;
                   return bTime.compareTo(aTime);
                 });
@@ -476,7 +487,8 @@ class _UserProfilePageState extends State<UserProfilePage> {
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: reviews.length,
-                separatorBuilder: (context, index) => const SizedBox(height: 12),
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 12),
                 itemBuilder: (context, index) {
                   final review = reviews[index].data() as Map<String, dynamic>;
                   return ReviewCard(review: review);
@@ -513,10 +525,7 @@ class _UserProfilePageState extends State<UserProfilePage> {
             icon: Icon(hasRated ? Icons.edit : Icons.star_outline),
             label: Text(
               hasRated ? 'Update Your Rating' : 'Rate This User',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.deepPurple[500],
