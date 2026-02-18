@@ -206,14 +206,31 @@ class GroupChatService {
     }
   }
 
-  /// Get real-time stream of messages for a group chat
-  Stream<QuerySnapshot> getMessages(String groupChatId) {
+  /// Get real-time stream of latest messages for a group chat
+  Stream<QuerySnapshot> getMessages(String groupChatId, {int limit = 30}) {
     return _firestore
         .collection('group_chats')
         .doc(groupChatId)
         .collection('messages')
-        .orderBy('createdAt', descending: false)
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
         .snapshots();
+  }
+
+  /// Get older messages before a given document for pagination
+  Future<QuerySnapshot> getOlderMessages(
+    String groupChatId, {
+    required DocumentSnapshot lastDoc,
+    int limit = 30,
+  }) {
+    return _firestore
+        .collection('group_chats')
+        .doc(groupChatId)
+        .collection('messages')
+        .orderBy('createdAt', descending: true)
+        .startAfterDocument(lastDoc)
+        .limit(limit)
+        .get();
   }
 
   /// Get real-time stream of all group chats for the current user

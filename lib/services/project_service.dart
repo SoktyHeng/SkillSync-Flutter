@@ -51,6 +51,23 @@ class ProjectService {
         .snapshots();
   }
 
+  // Get paginated projects
+  Future<QuerySnapshot> getProjectsPaginated({
+    int limit = 10,
+    DocumentSnapshot? lastDoc,
+  }) {
+    Query query = _firestore
+        .collection('projects')
+        .orderBy('createdAt', descending: true)
+        .limit(limit);
+
+    if (lastDoc != null) {
+      query = query.startAfterDocument(lastDoc);
+    }
+
+    return query.get();
+  }
+
   // Get a single project by ID
   Future<Map<String, dynamic>?> getProjectById(String projectId) async {
     try {
@@ -461,22 +478,23 @@ class ProjectService {
     if (user == null) return [];
 
     try {
-      // Get all projects
-      final projectsSnapshot = await _firestore.collection('projects').get();
+      // Use collectionGroup query to find all accepted requests for this user
+      final requestsSnapshot = await _firestore
+          .collectionGroup('requests')
+          .where('userId', isEqualTo: user.uid)
+          .where('status', isEqualTo: 'accepted')
+          .get();
+
       List<Map<String, dynamic>> contributingProjects = [];
 
-      for (var projectDoc in projectsSnapshot.docs) {
-        // Check if user is an accepted contributor in this project
-        final requestSnapshot = await _firestore
-            .collection('projects')
-            .doc(projectDoc.id)
-            .collection('requests')
-            .where('userId', isEqualTo: user.uid)
-            .where('status', isEqualTo: 'accepted')
-            .get();
+      for (var requestDoc in requestsSnapshot.docs) {
+        // Get the parent project ID from the request document path
+        final projectId = requestDoc.reference.parent.parent!.id;
+        final projectDoc =
+            await _firestore.collection('projects').doc(projectId).get();
 
-        if (requestSnapshot.docs.isNotEmpty) {
-          final projectData = projectDoc.data();
+        if (projectDoc.exists) {
+          final projectData = projectDoc.data()!;
           projectData['projectId'] = projectDoc.id;
           contributingProjects.add(projectData);
         }
