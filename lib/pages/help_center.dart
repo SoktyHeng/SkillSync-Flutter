@@ -28,7 +28,13 @@ class HelpCenterPage extends StatelessWidget {
                 icon: Icons.chat,
                 title: 'Live Chat',
                 subtitle: 'Available 9 AM - 6 PM',
-                onTap: () {},
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Live chat is not available at the moment.'),
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -36,19 +42,34 @@ class HelpCenterPage extends StatelessWidget {
           _buildSection(
             context,
             title: 'Legal',
-            // icon: Icons.gavel,
             children: [
               _buildResourceItem(
                 context,
                 icon: Icons.privacy_tip,
                 title: 'Privacy Policy',
-                onTap: () {},
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const _LegalPage(
+                      title: 'Privacy Policy',
+                      content: _privacyPolicyText,
+                    ),
+                  ),
+                ),
               ),
               _buildResourceItem(
                 context,
                 icon: Icons.description,
                 title: 'Terms of Service',
-                onTap: () {},
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const _LegalPage(
+                      title: 'Terms of Service',
+                      content: _termsOfServiceText,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -137,5 +158,73 @@ class HelpCenterPage extends StatelessWidget {
     if (await canLaunchUrl(emailUri)) {
       await launchUrl(emailUri);
     }
+  }
+}
+
+const String _privacyPolicyText = '''
+Last updated: February 2026
+
+1. Information We Collect
+We collect information you provide directly, such as your name, email address, and profile details when you create an account. We also collect usage data to improve our services.
+
+2. How We Use Your Information
+We use collected information to provide and maintain the SkillSync service, personalize your experience, communicate updates, and improve our platform.
+
+3. Data Sharing
+We do not sell your personal information. We may share data with service providers who assist in operating our platform, subject to confidentiality agreements.
+
+4. Data Security
+We implement industry-standard security measures to protect your information. However, no method of electronic transmission is 100% secure.
+
+5. Your Rights
+You may access, update, or delete your personal information at any time through your account settings. You may also contact us to request data export.
+
+6. Contact Us
+If you have questions about this Privacy Policy, please contact us at support@skillsync.com.
+''';
+
+const String _termsOfServiceText = '''
+Last updated: February 2026
+
+1. Acceptance of Terms
+By accessing or using SkillSync, you agree to be bound by these Terms of Service. If you do not agree, please do not use the service.
+
+2. User Accounts
+You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account.
+
+3. Acceptable Use
+You agree not to misuse the platform, including but not limited to: uploading harmful content, impersonating others, or attempting to gain unauthorized access.
+
+4. Intellectual Property
+All content and materials on SkillSync are owned by or licensed to us. You retain ownership of content you create and share on the platform.
+
+5. Termination
+We reserve the right to suspend or terminate accounts that violate these terms or engage in harmful behavior.
+
+6. Limitation of Liability
+SkillSync is provided "as is" without warranties. We are not liable for any indirect, incidental, or consequential damages arising from your use of the service.
+
+7. Contact Us
+For questions about these Terms, please contact us at support@skillsync.com.
+''';
+
+class _LegalPage extends StatelessWidget {
+  const _LegalPage({required this.title, required this.content});
+
+  final String title;
+  final String content;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Text(
+          content,
+          style: const TextStyle(fontSize: 15, height: 1.6),
+        ),
+      ),
+    );
   }
 }
