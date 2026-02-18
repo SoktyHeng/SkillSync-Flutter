@@ -22,6 +22,7 @@ class _ProjectCreationState extends State<ProjectCreation> {
   bool _isOngoing = false;
   bool _isLoading = false;
   bool _hasUnsavedChanges = false;
+  String _selectedStatus = 'recruiting';
 
   @override
   void initState() {
@@ -184,6 +185,7 @@ class _ProjectCreationState extends State<ProjectCreation> {
         techStack: techStack,
         lookingFor: lookingFor,
         duration: duration,
+        status: _selectedStatus,
       );
 
       if (mounted) {
@@ -204,6 +206,34 @@ class _ProjectCreationState extends State<ProjectCreation> {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
+    );
+  }
+
+  Widget _buildStatusChip(String value, String label, MaterialColor color) {
+    final isSelected = _selectedStatus == value;
+    return ChoiceChip(
+      label: Text(label),
+      selected: isSelected,
+      selectedColor: color[50],
+      labelStyle: TextStyle(
+        color: isSelected ? color[700] : Colors.grey[600],
+        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+        fontSize: 13,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(
+          color: isSelected ? color[400]! : Colors.grey[300]!,
+        ),
+      ),
+      onSelected: (selected) {
+        if (selected) {
+          setState(() {
+            _selectedStatus = value;
+            _onFormChanged();
+          });
+        }
+      },
     );
   }
 
@@ -314,6 +344,21 @@ class _ProjectCreationState extends State<ProjectCreation> {
                     decoration: _buildInputDecoration(
                       hint: 'e.g., Frontend Developer, UI Designer',
                     ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  const Text(
+                    'Project Status',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: [
+                      _buildStatusChip('recruiting', 'Recruiting', Colors.deepPurple),
+                      _buildStatusChip('in_progress', 'In Progress', Colors.orange),
+                      _buildStatusChip('completed', 'Completed', Colors.green),
+                    ],
                   ),
                   const SizedBox(height: 20),
 

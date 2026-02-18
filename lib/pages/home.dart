@@ -21,6 +21,7 @@ class _HomePageState extends State<HomePage> {
   final ScrollController _scrollController = ScrollController();
   String _searchQuery = '';
   String _selectedDuration = 'All';
+  String _selectedStatus = 'All';
 
   final List<String> _durationFilters = [
     'All',
@@ -102,6 +103,227 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       setState(() => _isLoadingMore = false);
     }
+  }
+
+  bool get _hasActiveFilters => _selectedDuration != 'All' || _selectedStatus != 'All';
+
+  Widget _buildFilterButton(bool isDark) {
+    return GestureDetector(
+      onTap: () => _showFilterBottomSheet(isDark),
+      child: Container(
+        height: 48,
+        width: 48,
+        decoration: BoxDecoration(
+          color: _hasActiveFilters
+              ? Colors.deepPurple[50]
+              : (isDark ? Colors.grey[800] : Colors.grey[100]),
+          borderRadius: BorderRadius.circular(12),
+          border: _hasActiveFilters
+              ? Border.all(color: Colors.deepPurple[300]!)
+              : null,
+        ),
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            Icon(
+              Icons.tune,
+              color: _hasActiveFilters ? Colors.deepPurple[600] : Colors.grey[600],
+            ),
+            if (_hasActiveFilters)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: Colors.deepPurple[500],
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showFilterBottomSheet(bool isDark) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Handle bar
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Filter Projects',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      if (_hasActiveFilters)
+                        TextButton(
+                          onPressed: () {
+                            setSheetState(() {});
+                            setState(() {
+                              _selectedDuration = 'All';
+                              _selectedStatus = 'All';
+                            });
+                            Navigator.pop(context);
+                          },
+                          child: Text(
+                            'Clear All',
+                            style: TextStyle(color: Colors.deepPurple[500]),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Duration Section
+                  Text(
+                    'Duration',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: _durationFilters.map((duration) {
+                      final isSelected = _selectedDuration == duration;
+                      return FilterChip(
+                        label: Text(duration),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          setSheetState(() {});
+                          setState(() {
+                            _selectedDuration = selected ? duration : 'All';
+                          });
+                        },
+                        backgroundColor: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+                        selectedColor: Colors.deepPurple[50],
+                        checkmarkColor: Colors.deepPurple[700],
+                        labelStyle: TextStyle(
+                          color: isSelected ? Colors.deepPurple[700] : Colors.grey[700],
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          fontSize: 13,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          side: BorderSide(
+                            color: isSelected ? Colors.deepPurple[300]! : Colors.grey[300]!,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Status Section
+                  Text(
+                    'Project Status',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[700],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      {'value': 'All', 'label': 'All', 'color': Colors.deepPurple},
+                      {'value': 'recruiting', 'label': 'Recruiting', 'color': Colors.deepPurple},
+                      {'value': 'in_progress', 'label': 'In Progress', 'color': Colors.orange},
+                      {'value': 'completed', 'label': 'Completed', 'color': Colors.green},
+                    ].map((item) {
+                      final value = item['value'] as String;
+                      final label = item['label'] as String;
+                      final color = item['color'] as MaterialColor;
+                      final isSelected = _selectedStatus == value;
+                      return FilterChip(
+                        label: Text(label),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          setSheetState(() {});
+                          setState(() {
+                            _selectedStatus = selected ? value : 'All';
+                          });
+                        },
+                        backgroundColor: isDark ? const Color(0xFF2C2C2C) : Colors.white,
+                        selectedColor: color[50],
+                        checkmarkColor: color[700],
+                        labelStyle: TextStyle(
+                          color: isSelected ? color[700] : Colors.grey[700],
+                          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                          fontSize: 13,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          side: BorderSide(
+                            color: isSelected ? color[300]! : Colors.grey[300]!,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Apply Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.deepPurple[500],
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Apply Filters',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   bool _matchesSearchQuery(Map<String, dynamic> project) {
@@ -196,99 +418,127 @@ class _HomePageState extends State<HomePage> {
       ),
       body: Column(
         children: [
-          // Search Bar
+          // Search Bar with Filter Icon
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-            child: TextField(
-              controller: _searchController,
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value;
-                });
-              },
-              decoration: InputDecoration(
-                hintText: 'Search by title, tech stack, or role...',
-                hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
-                prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: Icon(Icons.clear, color: Colors.grey[500]),
-                        onPressed: () {
-                          setState(() {
-                            _searchController.clear();
-                            _searchQuery = '';
-                          });
-                        },
-                      )
-                    : null,
-                filled: true,
-                fillColor: isDark ? Colors.grey[800] : Colors.grey[100],
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: Colors.deepPurple[300]!,
-                    width: 1.5,
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // Duration Filter Bar
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 12),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: _durationFilters.map((duration) {
-                  final isSelected = _selectedDuration == duration;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      label: Text(duration),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        setState(() {
-                          _selectedDuration = duration;
-                        });
-                      },
-                      backgroundColor: isDark
-                          ? const Color(0xFF121212)
-                          : Colors.white,
-                      selectedColor: Colors.deepPurple[100],
-                      checkmarkColor: Colors.deepPurple[700],
-                      labelStyle: TextStyle(
-                        color: isSelected
-                            ? Colors.deepPurple[700]
-                            : Colors.grey[700],
-                        fontWeight: isSelected
-                            ? FontWeight.w600
-                            : FontWeight.normal,
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                      });
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'Search by title, tech stack, or role...',
+                      hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
+                      prefixIcon: Icon(Icons.search, color: Colors.grey[500]),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: Icon(Icons.clear, color: Colors.grey[500]),
+                              onPressed: () {
+                                setState(() {
+                                  _searchController.clear();
+                                  _searchQuery = '';
+                                });
+                              },
+                            )
+                          : null,
+                      filled: true,
+                      fillColor: isDark ? Colors.grey[800] : Colors.grey[100],
+                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                        side: BorderSide(
-                          color: isSelected
-                              ? Colors.deepPurple[300]!
-                              : Colors.grey[300]!,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: Colors.deepPurple[300]!,
+                          width: 1.5,
                         ),
                       ),
                     ),
-                  );
-                }).toList(),
-              ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                _buildFilterButton(isDark),
+              ],
             ),
           ),
+          // Active filter chips
+          if (_selectedDuration != 'All' || _selectedStatus != 'All')
+            Padding(
+              padding: const EdgeInsets.only(left: 16, right: 16, bottom: 12),
+              child: Row(
+                children: [
+                  if (_selectedDuration != 'All')
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Chip(
+                        label: Text(
+                          _selectedDuration,
+                          style: TextStyle(fontSize: 12, color: Colors.deepPurple[700]),
+                        ),
+                        backgroundColor: Colors.deepPurple[50],
+                        deleteIcon: Icon(Icons.close, size: 16, color: Colors.deepPurple[700]),
+                        onDeleted: () {
+                          setState(() {
+                            _selectedDuration = 'All';
+                          });
+                        },
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          side: BorderSide(color: Colors.deepPurple[200]!),
+                        ),
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                  if (_selectedStatus != 'All')
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Builder(
+                        builder: (context) {
+                          final Map<String, Map<String, dynamic>> statusConfig = {
+                            'recruiting': {'label': 'Recruiting', 'color': Colors.deepPurple},
+                            'in_progress': {'label': 'In Progress', 'color': Colors.orange},
+                            'completed': {'label': 'Completed', 'color': Colors.green},
+                          };
+                          final config = statusConfig[_selectedStatus] ?? statusConfig['recruiting']!;
+                          final MaterialColor color = config['color'] as MaterialColor;
+                          final String label = config['label'] as String;
+                          return Chip(
+                            label: Text(
+                              label,
+                              style: TextStyle(fontSize: 12, color: color[700]),
+                            ),
+                            backgroundColor: color[50],
+                            deleteIcon: Icon(Icons.close, size: 16, color: color[700]),
+                            onDeleted: () {
+                              setState(() {
+                                _selectedStatus = 'All';
+                              });
+                            },
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(color: color[200]!),
+                            ),
+                            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            visualDensity: VisualDensity.compact,
+                          );
+                        },
+                      ),
+                    ),
+                ],
+              ),
+            ),
           const Divider(height: 1),
 
           // Projects List
@@ -317,6 +567,10 @@ class _HomePageState extends State<HomePage> {
       if (_selectedDuration != 'All') {
         final duration = data['duration'] as String?;
         if (!_matchesDurationFilter(duration)) return false;
+      }
+      if (_selectedStatus != 'All') {
+        final status = data['status'] as String? ?? 'recruiting';
+        if (status != _selectedStatus) return false;
       }
       return true;
     }).toList();
@@ -461,6 +715,7 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
   Widget build(BuildContext context) {
     final techStack = List<String>.from(widget.project['techStack'] ?? []);
     final lookingFor = List<String>.from(widget.project['lookingFor'] ?? []);
+    final status = widget.project['status'] as String? ?? 'recruiting';
 
     return GestureDetector(
       onTap: () async {
@@ -566,13 +821,22 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
               ),
               const SizedBox(height: 16),
 
-              // Project Title
-              Text(
-                widget.project['title'] ?? 'Untitled Project',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+              // Project Title and Status Badge
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.project['title'] ?? 'Untitled Project',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildStatusBadge(status),
+                ],
               ),
               const SizedBox(height: 8),
 
@@ -656,6 +920,34 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge(String status) {
+    final Map<String, Map<String, dynamic>> statusConfig = {
+      'recruiting': {'label': 'Recruiting', 'color': Colors.deepPurple},
+      'in_progress': {'label': 'In Progress', 'color': Colors.orange},
+      'completed': {'label': 'Completed', 'color': Colors.green},
+    };
+    final config = statusConfig[status] ?? statusConfig['recruiting']!;
+    final MaterialColor color = config['color'] as MaterialColor;
+    final String label = config['label'] as String;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color[200]!),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color[700],
         ),
       ),
     );
