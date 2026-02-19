@@ -166,6 +166,34 @@ class _ProjectDetailState extends State<ProjectDetail> {
     );
   }
 
+  Widget _buildStatusBadge(String status) {
+    final Map<String, Map<String, dynamic>> statusConfig = {
+      'recruiting': {'label': 'Recruiting', 'color': Colors.deepPurple},
+      'in_progress': {'label': 'In Progress', 'color': Colors.orange},
+      'completed': {'label': 'Completed', 'color': Colors.green},
+    };
+    final config = statusConfig[status] ?? statusConfig['recruiting']!;
+    final MaterialColor color = config['color'] as MaterialColor;
+    final String label = config['label'] as String;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color[200]!),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color[700],
+        ),
+      ),
+    );
+  }
+
   Widget _buildContributeButton() {
     if (_isRequesting) {
       return ElevatedButton(
@@ -296,6 +324,7 @@ class _ProjectDetailState extends State<ProjectDetail> {
     final duration = widget.project['duration'] as String?;
     final description = widget.project['description'] ?? '';
     final title = widget.project['title'] ?? 'Untitled Project';
+    final status = widget.project['status'] as String? ?? 'recruiting';
 
     return PopScope(
       canPop: false,
@@ -403,13 +432,22 @@ class _ProjectDetailState extends State<ProjectDetail> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Title
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  // Title and Status Badge
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      _buildStatusBadge(status),
+                    ],
                   ),
                   const SizedBox(height: 16),
 

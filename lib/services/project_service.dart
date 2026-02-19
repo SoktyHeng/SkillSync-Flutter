@@ -17,6 +17,7 @@ class ProjectService {
     required List<String> techStack,
     required List<String> lookingFor,
     String? duration,
+    String status = 'recruiting',
   }) async {
     final user = _auth.currentUser;
     if (user == null) {
@@ -30,6 +31,7 @@ class ProjectService {
       'techStack': techStack,
       'lookingFor': lookingFor,
       'duration': duration,
+      'status': status,
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     };
@@ -184,6 +186,28 @@ class ProjectService {
         .snapshots();
   }
 
+  // Update project status
+  Future<void> updateProjectStatus({
+    required String projectId,
+    required String status,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) {
+      throw Exception('No user logged in');
+    }
+
+    try {
+      await _firestore.collection('projects').doc(projectId).update({
+        'status': status,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      debugPrint('Project status updated successfully');
+    } catch (e) {
+      debugPrint('Error updating project status: $e');
+      rethrow;
+    }
+  }
+
   // Update a project
   Future<void> updateProject({
     required String projectId,
@@ -192,6 +216,7 @@ class ProjectService {
     required List<String> techStack,
     required List<String> lookingFor,
     String? duration,
+    String status = 'recruiting',
   }) async {
     final user = _auth.currentUser;
     if (user == null) {
@@ -205,6 +230,7 @@ class ProjectService {
         'techStack': techStack,
         'lookingFor': lookingFor,
         'duration': duration,
+        'status': status,
         'updatedAt': FieldValue.serverTimestamp(),
       });
       debugPrint('Project updated successfully');

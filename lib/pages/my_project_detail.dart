@@ -111,6 +111,114 @@ class _MyProjectDetailState extends State<MyProjectDetail>
     }
   }
 
+  Widget _buildStatusBadge(String status) {
+    final Map<String, Map<String, dynamic>> statusConfig = {
+      'recruiting': {'label': 'Recruiting', 'color': Colors.deepPurple},
+      'in_progress': {'label': 'In Progress', 'color': Colors.orange},
+      'completed': {'label': 'Completed', 'color': Colors.green},
+    };
+    final config = statusConfig[status] ?? statusConfig['recruiting']!;
+    final MaterialColor color = config['color'] as MaterialColor;
+    final String label = config['label'] as String;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color[200]!),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color[700],
+        ),
+      ),
+    );
+  }
+
+  void _showStatusChangeDialog() {
+    final currentStatus = _project['status'] as String? ?? 'recruiting';
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        String selectedStatus = currentStatus;
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              title: const Text('Change Project Status'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _buildStatusOption(selectedStatus, 'recruiting', 'Recruiting', Colors.deepPurple, (value) {
+                    setDialogState(() => selectedStatus = value);
+                  }),
+                  _buildStatusOption(selectedStatus, 'in_progress', 'In Progress', Colors.orange, (value) {
+                    setDialogState(() => selectedStatus = value);
+                  }),
+                  _buildStatusOption(selectedStatus, 'completed', 'Completed', Colors.green, (value) {
+                    setDialogState(() => selectedStatus = value);
+                  }),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    Navigator.pop(dialogContext);
+                    try {
+                      await _projectService.updateProjectStatus(
+                        projectId: widget.projectId,
+                        status: selectedStatus,
+                      );
+                      setState(() {
+                        _project['status'] = selectedStatus;
+                      });
+                    } catch (e) {
+                      _showSnackBar('Error updating status: ${e.toString()}', isError: true);
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple[500],
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Update'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildStatusOption(String currentStatus, String value, String label, MaterialColor color, ValueChanged<String> onChanged) {
+    final isSelected = currentStatus == value;
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(
+        isSelected ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+        color: isSelected ? color[600] : Colors.grey[400],
+      ),
+      title: Text(
+        label,
+        style: TextStyle(
+          color: isSelected ? color[700] : null,
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+        ),
+      ),
+      onTap: () => onChanged(value),
+    );
+  }
+
   void _showDeleteConfirmation() {
     showDialog(
       context: context,
@@ -159,6 +267,7 @@ class _MyProjectDetailState extends State<MyProjectDetail>
     final duration = _project['duration'] as String?;
     final description = _project['description'] ?? '';
     final title = _project['title'] ?? 'Untitled Project';
+    final status = _project['status'] as String? ?? 'recruiting';
 
     return Scaffold(
       backgroundColor: Theme.of(context).brightness == Brightness.dark
@@ -172,6 +281,8 @@ class _MyProjectDetailState extends State<MyProjectDetail>
             onSelected: (value) {
               if (value == 'edit') {
                 _openEditPage();
+              } else if (value == 'status') {
+                _showStatusChangeDialog();
               } else if (value == 'delete') {
                 _showDeleteConfirmation();
               }
@@ -188,6 +299,20 @@ class _MyProjectDetailState extends State<MyProjectDetail>
                     ),
                     const SizedBox(width: 12),
                     const Text('Edit'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'status',
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.flag_outlined,
+                      color: Colors.orange[500],
+                      size: 20,
+                    ),
+                    const SizedBox(width: 12),
+                    const Text('Change Status'),
                   ],
                 ),
               ),
@@ -217,12 +342,20 @@ class _MyProjectDetailState extends State<MyProjectDetail>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildStatusBadge(status),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 Text(

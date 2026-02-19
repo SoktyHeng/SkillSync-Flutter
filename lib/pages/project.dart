@@ -340,11 +340,40 @@ class _ProjectCardState extends State<_ProjectCard> {
     });
   }
 
+  Widget _buildStatusBadge(String status) {
+    final Map<String, Map<String, dynamic>> statusConfig = {
+      'recruiting': {'label': 'Recruiting', 'color': Colors.deepPurple},
+      'in_progress': {'label': 'In Progress', 'color': Colors.orange},
+      'completed': {'label': 'Completed', 'color': Colors.green},
+    };
+    final config = statusConfig[status] ?? statusConfig['recruiting']!;
+    final MaterialColor color = config['color'] as MaterialColor;
+    final String label = config['label'] as String;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color[50],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color[200]!),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color[700],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final techStack = List<String>.from(widget.project['techStack'] ?? []);
     final lookingFor = List<String>.from(widget.project['lookingFor'] ?? []);
     final duration = widget.project['duration'] as String?;
+    final status = widget.project['status'] as String? ?? 'recruiting';
 
     return GestureDetector(
       onTap: () {
@@ -401,6 +430,10 @@ class _ProjectCardState extends State<_ProjectCard> {
                   ),
                 ],
               ),
+              const SizedBox(height: 8),
+
+              // Status badge
+              _buildStatusBadge(status),
               const SizedBox(height: 8),
 
               // Description
