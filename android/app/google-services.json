@@ -48,6 +48,66 @@
           ]
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:735888507369:android:8ac750d7fcde4e14310b78",
+        "android_client_info": {
+          "package_name": "edu.au.skillsync"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "735888507369-04dql77gu2vrdjl9hec1bfvc6rpufsq2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "edu.au.skillsync",
+            "certificate_hash": "e9f6a4a84f960f2409ba26ded849a8c7212b1ab6"
+          }
+        },
+        {
+          "client_id": "735888507369-2jhifjs1mm7qmiedhn73h3nnvrffe2uo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "edu.au.skillsync",
+            "certificate_hash": "9ddf5a78c5fd1ae34aae565718d70cdb8983e7f4"
+          }
+        },
+        {
+          "client_id": "735888507369-6mprh8er9kcvtprnsh6ks5389m7ki9se.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "edu.au.skillsync",
+            "certificate_hash": "5579eb5b23644e8611f3e73d93d79dc1e79bd714"
+          }
+        },
+        {
+          "client_id": "735888507369-nlv1d9v4p52jpqbdbq6mkn4qqe71u7qb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAlFdnWc0kOrmwj7wwguY2qrWCegkoFpuc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "735888507369-nlv1d9v4p52jpqbdbq6mkn4qqe71u7qb.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "735888507369-fmeafut6r4hsj0q5skmhjmamjlib2ql6.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.vanGo"
+              }
+            }
+          ]
+        }
+      }
     }
   ],
   "configuration_version": "1"
