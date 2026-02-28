@@ -515,45 +515,23 @@ class _MyProjectDetailState extends State<MyProjectDetail>
 
         final contributors = snapshot.data?.docs ?? [];
 
-        if (contributors.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.people_outline, size: 64, color: Colors.grey[400]),
-                const SizedBox(height: 16),
-                Text(
-                  'No contributors yet',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Accept requests to add contributors\nto your project',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return ListView.builder(
-          itemCount: contributors.length,
-          itemBuilder: (context, index) {
-            final contributor = contributors[index];
-            final contributorData = contributor.data() as Map<String, dynamic>;
-            final userId = contributorData['userId'] as String;
-
-            return _ContributorCard(
-              userId: userId,
+        return ListView(
+          children: [
+            _AdminCard(
+              userId: _project['uid'] as String,
               projectService: _projectService,
-              onRemove: () => _removeContributor(contributor.id, userId),
-            );
-          },
+            ),
+            ...contributors.map((contributor) {
+              final contributorData =
+                  contributor.data() as Map<String, dynamic>;
+              final userId = contributorData['userId'] as String;
+              return _ContributorCard(
+                userId: userId,
+                projectService: _projectService,
+                onRemove: () => _removeContributor(contributor.id, userId),
+              );
+            }),
+          ],
         );
       },
     );
@@ -774,6 +752,87 @@ class _ContributorCardState extends State<_ContributorCard> {
             child: const Text('Remove'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _AdminCard extends StatefulWidget {
+  final String userId;
+  final ProjectService projectService;
+
+  const _AdminCard({
+    required this.userId,
+    required this.projectService,
+  });
+
+  @override
+  State<_AdminCard> createState() => _AdminCardState();
+}
+
+class _AdminCardState extends State<_AdminCard> {
+  String _userName = '';
+  String? _userImageUrl;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserInfo();
+  }
+
+  Future<void> _loadUserInfo() async {
+    final userInfo = await widget.projectService.getUserInfo(widget.userId);
+    if (mounted) {
+      setState(() {
+        _userName = userInfo['name'] ?? 'Unknown User';
+        _userImageUrl = userInfo['profileImageUrl'];
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Theme.of(context).cardColor,
+      margin: const EdgeInsets.only(bottom: 1),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      child: ListTile(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => UserProfilePage(userId: widget.userId),
+            ),
+          );
+        },
+        leading: CircleAvatar(
+          radius: 24,
+          backgroundColor: Colors.deepPurple[100],
+          backgroundImage:
+              _userImageUrl != null ? NetworkImage(_userImageUrl!) : null,
+          child: _isLoading
+              ? SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.deepPurple[300],
+                  ),
+                )
+              : _userImageUrl == null
+                  ? Icon(Icons.person, color: Colors.deepPurple[400], size: 24)
+                  : null,
+        ),
+        title: Text(
+          _userName,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        subtitle: Text(
+          'Admin',
+          style: TextStyle(fontSize: 13, color: Colors.deepPurple[600]),
+        ),
       ),
     );
   }
