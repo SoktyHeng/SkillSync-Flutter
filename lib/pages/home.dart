@@ -916,7 +916,7 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
                   children: [
                     Expanded(
                       child: Text(
-                        'Looking for: ${lookingFor.join(", ")}',
+                        'Looking for roles: ${lookingFor.join(", ")}',
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.green[700],
