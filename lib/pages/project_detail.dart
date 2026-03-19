@@ -222,78 +222,71 @@ class _ProjectDetailState extends State<ProjectDetail> {
               ? const Text(
                   'Would you like to send a request to join this project? The project owner will review your request.',
                 )
+              : availableRoles.isEmpty
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.group_off, size: 48, color: Colors.grey[400]),
+                    const SizedBox(height: 12),
+                    Text(
+                      'All roles have been filled',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'There are no open positions left for this project.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                    ),
+                  ],
+                )
               : Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('Select the role you\'d like to fill:'),
                     const SizedBox(height: 12),
-                    ...lookingFor.map((role) {
-                      final isTaken = _takenRoles.contains(role);
+                    ...availableRoles.map((role) {
                       final isSelected = selectedRole == role;
                       return GestureDetector(
-                        onTap: isTaken
-                            ? null
-                            : () => setDialogState(() => selectedRole = role),
+                        onTap: () => setDialogState(() => selectedRole = role),
                         child: Container(
                           margin: const EdgeInsets.only(bottom: 8),
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 10),
                           decoration: BoxDecoration(
-                            color: isTaken
-                                ? Colors.grey[100]
-                                : isSelected
-                                    ? Colors.deepPurple[50]
-                                    : Colors.white,
+                            color: isSelected
+                                ? Colors.deepPurple[50]
+                                : Colors.white,
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: isTaken
-                                  ? Colors.grey[300]!
-                                  : isSelected
-                                      ? Colors.deepPurple[400]!
-                                      : Colors.grey[300]!,
+                              color: isSelected
+                                  ? Colors.deepPurple[400]!
+                                  : Colors.grey[300]!,
                             ),
                           ),
                           child: Row(
                             children: [
                               Icon(
-                                isSelected && !isTaken
+                                isSelected
                                     ? Icons.check_circle
                                     : Icons.circle_outlined,
                                 size: 18,
-                                color: isTaken
-                                    ? Colors.grey[400]
-                                    : isSelected
-                                        ? Colors.deepPurple[500]
-                                        : Colors.grey[400],
+                                color: isSelected
+                                    ? Colors.deepPurple[500]
+                                    : Colors.grey[400],
                               ),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
                                   role,
-                                  style: TextStyle(
-                                    color: isTaken ? Colors.grey[400] : null,
-                                    decoration: isTaken
-                                        ? TextDecoration.lineThrough
-                                        : null,
-                                    fontSize: 14,
-                                  ),
+                                  style: const TextStyle(fontSize: 14),
                                 ),
                               ),
-                              if (isTaken)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[200],
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  child: Text(
-                                    'Filled',
-                                    style: TextStyle(
-                                        fontSize: 11, color: Colors.grey[600]),
-                                  ),
-                                ),
                             ],
                           ),
                         ),
@@ -309,10 +302,12 @@ class _ProjectDetailState extends State<ProjectDetail> {
             ElevatedButton(
               onPressed: (lookingFor.isNotEmpty && selectedRole == null)
                   ? null
-                  : () {
-                      Navigator.pop(context);
-                      _sendContributeRequest(role: selectedRole);
-                    },
+                  : availableRoles.isEmpty && lookingFor.isNotEmpty
+                      ? null
+                      : () {
+                          Navigator.pop(context);
+                          _sendContributeRequest(role: selectedRole);
+                        },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.deepPurple[500],
                 foregroundColor: Colors.white,
