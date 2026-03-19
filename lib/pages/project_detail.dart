@@ -27,6 +27,10 @@ class _ProjectDetailState extends State<ProjectDetail> {
   bool _didRequestThisSession = false;
   bool _isBookmarked = false;
   List<String> _takenRoles = [];
+  double _averageRating = 0.0;
+  int _ratingCount = 0;
+  int? _userRating;
+  bool _isRating = false;
 
   @override
   void initState() {
@@ -35,6 +39,7 @@ class _ProjectDetailState extends State<ProjectDetail> {
     _loadRequestStatus();
     _loadBookmarkStatus();
     _loadTakenRoles();
+    _loadRating();
   }
 
   Future<void> _loadBookmarkStatus() async {
@@ -86,6 +91,59 @@ class _ProjectDetailState extends State<ProjectDetail> {
         _takenRoles = taken;
       });
     }
+  }
+
+  Future<void> _loadRating() async {
+    final ratingData = await _projectService.getProjectRating(widget.projectId);
+    final userRating = await _projectService.getUserRating(widget.projectId);
+    if (mounted) {
+      setState(() {
+        _averageRating = (ratingData['average'] as num).toDouble();
+        _ratingCount = ratingData['count'] as int;
+        _userRating = userRating;
+      });
+    }
+  }
+
+  Future<void> _submitRating(int rating) async {
+    setState(() => _isRating = true);
+    try {
+      await _projectService.rateProject(widget.projectId, rating);
+      if (mounted) {
+        setState(() {
+          _userRating = rating;
+          _isRating = false;
+        });
+        await _loadRating();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isRating = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to submit rating: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildStars(double rating, {double size = 16}) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(5, (i) {
+        if (rating >= i + 1) {
+          return Icon(Icons.star, size: size, color: Colors.amber[600]);
+        } else if (rating >= i + 0.5) {
+          return Icon(Icons.star_half, size: size, color: Colors.amber[600]);
+        } else {
+          return Icon(Icons.star_border, size: size, color: Colors.amber[600]);
+        }
+      }),
+    );
   }
 
   String _getTimeAgo(Timestamp? timestamp) {
@@ -550,6 +608,28 @@ class _ProjectDetailState extends State<ProjectDetail> {
                       _buildStatusBadge(status),
                     ],
                   ),
+                  const SizedBox(height: 8),
+
+                  // Average Rating
+                  if (_ratingCount > 0)
+                    Row(
+                      children: [
+                        _buildStars(_averageRating, size: 18),
+                        const SizedBox(width: 6),
+                        Text(
+                          _averageRating.toStringAsFixed(1),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '($_ratingCount ${_ratingCount == 1 ? 'rating' : 'ratings'})',
+                          style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                        ),
+                      ],
+                    ),
                   const SizedBox(height: 16),
 
                   // Duration
@@ -722,6 +802,45 @@ class _ProjectDetailState extends State<ProjectDetail> {
                         ),
                       );
                     }),
+                  ],
+
+                  // Rate this project (contributors only)
+                  if (_requestStatus == 'accepted') ...[
+                    const SizedBox(height: 24),
+                    const Divider(),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Rate this Project',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _userRating != null
+                          ? 'Your rating: $_userRating/5 — tap to change'
+                          : 'Share your experience as a contributor',
+                      style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: List.generate(5, (i) {
+                        final star = i + 1;
+                        return GestureDetector(
+                          onTap: _isRating ? null : () => _submitRating(star),
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: Icon(
+                              star <= (_userRating ?? 0)
+                                  ? Icons.star
+                                  : Icons.star_border,
+                              size: 36,
+                              color: _isRating
+                                  ? Colors.amber[300]
+                                  : Colors.amber[600],
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
                   ],
 
                   // Bottom spacing for button

@@ -667,6 +667,8 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
   bool _isLoading = true;
   int _contributorCount = 0;
   String? _userRequestStatus;
+  double _averageRating = 0.0;
+  int _ratingCount = 0;
 
   @override
   void initState() {
@@ -674,6 +676,7 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
     _loadCreatorInfo();
     _loadContributorCount();
     _loadUserRequestStatus();
+    _loadRating();
   }
 
   Future<void> _loadUserRequestStatus() async {
@@ -707,6 +710,16 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
     if (mounted) {
       setState(() {
         _contributorCount = count;
+      });
+    }
+  }
+
+  Future<void> _loadRating() async {
+    final ratingData = await widget.projectService.getProjectRating(widget.projectId);
+    if (mounted) {
+      setState(() {
+        _averageRating = (ratingData['average'] as num).toDouble();
+        _ratingCount = ratingData['count'] as int;
       });
     }
   }
@@ -903,7 +916,7 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
                 const SizedBox(height: 12),
               ],
 
-              // Contributors count
+              // Contributors count and Rating
               Row(
                 children: [
                   Icon(Icons.group, size: 16, color: Colors.grey[600]),
@@ -916,6 +929,19 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
+                  if (_ratingCount > 0) ...[
+                    const SizedBox(width: 12),
+                    Icon(Icons.star, size: 14, color: Colors.amber[600]),
+                    const SizedBox(width: 3),
+                    Text(
+                      '${_averageRating.toStringAsFixed(1)} ($_ratingCount)',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ],
