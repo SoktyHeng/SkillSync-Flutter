@@ -40,9 +40,12 @@ class _HomePageState extends State<HomePage> {
   bool _hasMore = true;
   static const int _pageSize = 10;
 
+  Set<String> _contributingProjectIds = {};
+
   @override
   void initState() {
     super.initState();
+    _loadContributingProjectIds();
     _loadProjects();
     _scrollController.addListener(_onScroll);
   }
@@ -63,11 +66,22 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _loadContributingProjectIds() async {
+    final projects = await _projectService.getContributingProjects();
+    if (mounted) {
+      setState(() {
+        _contributingProjectIds = projects.map((p) => p['projectId'] as String).toSet();
+      });
+    }
+  }
+
   Future<void> _loadProjects() async {
     if (_isLoading) return;
     setState(() {
       _isLoading = true;
     });
+
+    await _loadContributingProjectIds();
 
     try {
       final snapshot = await _projectService.getProjectsPaginated(
@@ -563,6 +577,7 @@ class _HomePageState extends State<HomePage> {
     final filteredProjects = _projects.where((doc) {
       final data = doc.data() as Map<String, dynamic>;
       if (data['uid'] == currentUserId) return false;
+      if (_contributingProjectIds.contains(doc.id)) return false;
       if (!_matchesSearchQuery(data)) return false;
       if (_selectedDuration != 'All') {
         final duration = data['duration'] as String?;

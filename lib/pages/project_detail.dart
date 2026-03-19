@@ -682,10 +682,10 @@ class _ProjectDetailState extends State<ProjectDetail> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Tech Stack Section
+                  // Skill Section
                   if (techStack.isNotEmpty) ...[
                     const Text(
-                      'Tech Stack',
+                      'Skill',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -723,7 +723,7 @@ class _ProjectDetailState extends State<ProjectDetail> {
                   // Looking For Section
                   if (lookingFor.isNotEmpty) ...[
                     const Text(
-                      'Looking For',
+                      'Looking For Roles',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
