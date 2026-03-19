@@ -573,7 +573,7 @@ class _ProjectDetailState extends State<ProjectDetail> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Duration: $duration',
+                            'Timeline: $duration',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,

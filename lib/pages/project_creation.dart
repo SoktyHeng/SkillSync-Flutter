@@ -371,7 +371,7 @@ class _ProjectCreationState extends State<ProjectCreation> {
                   const SizedBox(height: 20),
 
                   const Text(
-                    'Duration',
+                    'Timeline',
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),

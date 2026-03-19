@@ -206,7 +206,7 @@ class _HomePageState extends State<HomePage> {
 
                   // Duration Section
                   Text(
-                    'Duration',
+                    'Timeline',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -583,8 +583,8 @@ class _HomePageState extends State<HomePage> {
         emptyMessage = 'No projects found for "$_searchQuery"';
         emptySubtitle = 'Try a different search term';
       } else if (_selectedDuration != 'All') {
-        emptyMessage = 'No projects with $_selectedDuration duration';
-        emptySubtitle = 'Try a different duration filter';
+        emptyMessage = 'No projects with $_selectedDuration timeline';
+        emptySubtitle = 'Try a different timeline filter';
       } else {
         emptyMessage = 'No projects yet';
         emptySubtitle = 'Check back later for new projects!';
