@@ -485,10 +485,12 @@ class _MyProjectDetailState extends State<MyProjectDetail>
             final request = requests[index];
             final requestData = request.data() as Map<String, dynamic>;
             final userId = requestData['userId'] as String;
+            final role = requestData['role'] as String?;
 
             return _RequestCard(
               userId: userId,
               requestId: request.id,
+              role: role,
               projectService: _projectService,
               onAccept: () => _acceptRequest(request.id),
               onReject: () => _rejectRequest(request.id),
@@ -525,8 +527,10 @@ class _MyProjectDetailState extends State<MyProjectDetail>
               final contributorData =
                   contributor.data() as Map<String, dynamic>;
               final userId = contributorData['userId'] as String;
+              final role = contributorData['role'] as String?;
               return _ContributorCard(
                 userId: userId,
+                role: role,
                 projectService: _projectService,
                 onRemove: () => _removeContributor(contributor.id, userId),
               );
@@ -541,6 +545,7 @@ class _MyProjectDetailState extends State<MyProjectDetail>
 class _RequestCard extends StatefulWidget {
   final String userId;
   final String requestId;
+  final String? role;
   final ProjectService projectService;
   final VoidCallback onAccept;
   final VoidCallback onReject;
@@ -548,6 +553,7 @@ class _RequestCard extends StatefulWidget {
   const _RequestCard({
     required this.userId,
     required this.requestId,
+    this.role,
     required this.projectService,
     required this.onAccept,
     required this.onReject,
@@ -618,7 +624,9 @@ class _RequestCardState extends State<_RequestCard> {
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         subtitle: Text(
-          'Wants to contribute',
+          widget.role != null
+              ? 'Applying for: ${widget.role}'
+              : 'Wants to contribute',
           style: TextStyle(fontSize: 13, color: Colors.orange[600]),
         ),
         trailing: Row(
@@ -644,11 +652,13 @@ class _RequestCardState extends State<_RequestCard> {
 
 class _ContributorCard extends StatefulWidget {
   final String userId;
+  final String? role;
   final ProjectService projectService;
   final VoidCallback onRemove;
 
   const _ContributorCard({
     required this.userId,
+    this.role,
     required this.projectService,
     required this.onRemove,
   });
@@ -718,7 +728,7 @@ class _ContributorCardState extends State<_ContributorCard> {
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
         subtitle: Text(
-          'Contributor',
+          widget.role != null ? widget.role! : 'Contributor',
           style: TextStyle(fontSize: 13, color: Colors.green[600]),
         ),
         trailing: IconButton(

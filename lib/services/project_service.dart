@@ -281,7 +281,7 @@ class ProjectService {
   }
 
   // Send a contribution request
-  Future<void> requestToContribute(String projectId) async {
+  Future<void> requestToContribute(String projectId, {String? role}) async {
     final user = _auth.currentUser;
     if (user == null) {
       throw Exception('No user logged in');
@@ -307,12 +307,33 @@ class ProjectService {
           .add({
         'userId': user.uid,
         'status': 'pending',
+        'role': role,
         'createdAt': FieldValue.serverTimestamp(),
       });
       debugPrint('Contribution request sent successfully');
     } catch (e) {
       debugPrint('Error sending contribution request: $e');
       rethrow;
+    }
+  }
+
+  // Get roles already filled by accepted contributors
+  Future<List<String>> getTakenRoles(String projectId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('projects')
+          .doc(projectId)
+          .collection('requests')
+          .where('status', isEqualTo: 'accepted')
+          .get();
+      return snapshot.docs
+          .map((doc) => doc.data()['role'] as String?)
+          .where((role) => role != null && role.isNotEmpty)
+          .cast<String>()
+          .toList();
+    } catch (e) {
+      debugPrint('Error getting taken roles: $e');
+      return [];
     }
   }
 

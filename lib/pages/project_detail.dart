@@ -26,6 +26,7 @@ class _ProjectDetailState extends State<ProjectDetail> {
   bool _isRequesting = false;
   bool _didRequestThisSession = false;
   bool _isBookmarked = false;
+  List<String> _takenRoles = [];
 
   @override
   void initState() {
@@ -33,6 +34,7 @@ class _ProjectDetailState extends State<ProjectDetail> {
     _loadCreatorInfo();
     _loadRequestStatus();
     _loadBookmarkStatus();
+    _loadTakenRoles();
   }
 
   Future<void> _loadBookmarkStatus() async {
@@ -77,6 +79,15 @@ class _ProjectDetailState extends State<ProjectDetail> {
     }
   }
 
+  Future<void> _loadTakenRoles() async {
+    final taken = await _projectService.getTakenRoles(widget.projectId);
+    if (mounted) {
+      setState(() {
+        _takenRoles = taken;
+      });
+    }
+  }
+
   String _getTimeAgo(Timestamp? timestamp) {
     if (timestamp == null) return '';
     final now = DateTime.now();
@@ -96,13 +107,13 @@ class _ProjectDetailState extends State<ProjectDetail> {
     }
   }
 
-  Future<void> _sendContributeRequest() async {
+  Future<void> _sendContributeRequest({String? role}) async {
     setState(() {
       _isRequesting = true;
     });
 
     try {
-      await _projectService.requestToContribute(widget.projectId);
+      await _projectService.requestToContribute(widget.projectId, role: role);
       if (mounted) {
         setState(() {
           _requestStatus = 'pending';
@@ -137,31 +148,121 @@ class _ProjectDetailState extends State<ProjectDetail> {
   }
 
   void _showContributeDialog() {
+    final lookingFor = List<String>.from(widget.project['lookingFor'] ?? []);
+    final availableRoles =
+        lookingFor.where((r) => !_takenRoles.contains(r)).toList();
+    String? selectedRole = availableRoles.isNotEmpty ? availableRoles.first : null;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Request to Contribute'),
-        content: const Text(
-          'Would you like to send a request to join this project? The project owner will review your request.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _sendContributeRequest();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.deepPurple[500],
-              foregroundColor: Colors.white,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Request to Contribute'),
+          content: lookingFor.isEmpty
+              ? const Text(
+                  'Would you like to send a request to join this project? The project owner will review your request.',
+                )
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Select the role you\'d like to fill:'),
+                    const SizedBox(height: 12),
+                    ...lookingFor.map((role) {
+                      final isTaken = _takenRoles.contains(role);
+                      final isSelected = selectedRole == role;
+                      return GestureDetector(
+                        onTap: isTaken
+                            ? null
+                            : () => setDialogState(() => selectedRole = role),
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isTaken
+                                ? Colors.grey[100]
+                                : isSelected
+                                    ? Colors.deepPurple[50]
+                                    : Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isTaken
+                                  ? Colors.grey[300]!
+                                  : isSelected
+                                      ? Colors.deepPurple[400]!
+                                      : Colors.grey[300]!,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                isSelected && !isTaken
+                                    ? Icons.check_circle
+                                    : Icons.circle_outlined,
+                                size: 18,
+                                color: isTaken
+                                    ? Colors.grey[400]
+                                    : isSelected
+                                        ? Colors.deepPurple[500]
+                                        : Colors.grey[400],
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  role,
+                                  style: TextStyle(
+                                    color: isTaken ? Colors.grey[400] : null,
+                                    decoration: isTaken
+                                        ? TextDecoration.lineThrough
+                                        : null,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                              if (isTaken)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey[200],
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    'Filled',
+                                    style: TextStyle(
+                                        fontSize: 11, color: Colors.grey[600]),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
             ),
-            child: const Text('Send Request'),
-          ),
-        ],
+            ElevatedButton(
+              onPressed: (lookingFor.isNotEmpty && selectedRole == null)
+                  ? null
+                  : () {
+                      Navigator.pop(context);
+                      _sendContributeRequest(role: selectedRole);
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurple[500],
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Send Request'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -550,6 +651,7 @@ class _ProjectDetailState extends State<ProjectDetail> {
                     ),
                     const SizedBox(height: 12),
                     ...lookingFor.map((role) {
+                      final isFilled = _takenRoles.contains(role);
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Row(
@@ -557,24 +659,65 @@ class _ProjectDetailState extends State<ProjectDetail> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.green[50],
+                                color: isFilled
+                                    ? Colors.grey[100]
+                                    : Colors.green[50],
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Icon(
-                                Icons.person_search,
+                                isFilled
+                                    ? Icons.check_circle
+                                    : Icons.person_search,
                                 size: 20,
-                                color: Colors.green[600],
+                                color: isFilled
+                                    ? Colors.grey[400]
+                                    : Colors.green[600],
                               ),
                             ),
                             const SizedBox(width: 12),
-                            Text(
-                              role,
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: Colors.grey[800],
-                                fontWeight: FontWeight.w500,
+                            Expanded(
+                              child: Text(
+                                role,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: isFilled
+                                      ? Colors.grey[400]
+                                      : Colors.grey[800],
+                                  fontWeight: FontWeight.w500,
+                                  decoration: isFilled
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                ),
                               ),
                             ),
+                            if (isFilled)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[200],
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  'Filled',
+                                  style: TextStyle(
+                                      fontSize: 11, color: Colors.grey[600]),
+                                ),
+                              )
+                            else
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: Colors.green[50],
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  'Open',
+                                  style: TextStyle(
+                                      fontSize: 11, color: Colors.green[700]),
+                                ),
+                              ),
                           ],
                         ),
                       );
