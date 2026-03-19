@@ -163,6 +163,10 @@ class _ProjectCreationState extends State<ProjectCreation> {
       _showSnackBar('Please enter the tech stack');
       return;
     }
+    if (_lookingForController.text.trim().isEmpty) {
+      _showSnackBar('Please enter the looking for roles');
+      return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -343,9 +347,14 @@ class _ProjectCreationState extends State<ProjectCreation> {
                   ),
                   const SizedBox(height: 20),
 
-                  const Text(
-                    'Looking For Roles:',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  RichText(
+                    text: const TextSpan(
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black),
+                      children: [
+                        TextSpan(text: 'Looking For Roles:'),
+                        TextSpan(text: ' *', style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 8),
                   TextField(
