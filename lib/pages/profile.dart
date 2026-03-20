@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:skillsync_sp2/auth/main_page.dart';
 import 'package:skillsync_sp2/pages/edit_profile.dart';
 import 'package:skillsync_sp2/pages/help_center.dart';
-import 'package:skillsync_sp2/pages/notifications_page.dart';
 import 'package:skillsync_sp2/pages/settings.dart';
 import 'package:skillsync_sp2/services/notification_service.dart';
 import 'package:skillsync_sp2/services/user_service.dart';
@@ -80,25 +79,6 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   );
                   _loadUserName();
-                },
-              ),
-              StreamBuilder<int>(
-                stream: _notificationService.getUnreadCount(),
-                builder: (context, snapshot) {
-                  final unreadCount = snapshot.data ?? 0;
-                  return ProfileMenu(
-                    text: "Notifications",
-                    icon: Icons.notifications,
-                    badgeCount: unreadCount,
-                    press: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const NotificationsPage(),
-                        ),
-                      );
-                    },
-                  );
                 },
               ),
               ProfileMenu(
