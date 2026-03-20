@@ -82,14 +82,14 @@ class _UserProfilePageState extends State<UserProfilePage> {
     }
   }
 
-  Future<void> _openGitHub() async {
-    var githubUrl = _userData?['githubUrl']?.toString() ?? '';
-    if (githubUrl.isNotEmpty) {
-      if (!githubUrl.startsWith('http://') &&
-          !githubUrl.startsWith('https://')) {
-        githubUrl = 'https://$githubUrl';
+  Future<void> _openLinkedIn() async {
+    var linkedinUrl = _userData?['linkedinUrl']?.toString() ?? '';
+    if (linkedinUrl.isNotEmpty) {
+      if (!linkedinUrl.startsWith('http://') &&
+          !linkedinUrl.startsWith('https://')) {
+        linkedinUrl = 'https://$linkedinUrl';
       }
-      final uri = Uri.parse(githubUrl);
+      final uri = Uri.parse(linkedinUrl);
       await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
     }
   }
@@ -291,18 +291,18 @@ class _UserProfilePageState extends State<UserProfilePage> {
             'Year',
             _userData?['yearOfStudy'],
           ),
-          if (_userData?['githubUrl'] != null &&
-              (_userData!['githubUrl'] as String).isNotEmpty) ...[
+          if (_userData?['linkedinUrl'] != null &&
+              (_userData!['linkedinUrl'] as String).isNotEmpty) ...[
             const SizedBox(height: 12),
             GestureDetector(
-              onTap: _openGitHub,
+              onTap: _openLinkedIn,
               child: Row(
                 children: [
-                  Icon(Icons.code, size: 20, color: Colors.grey[600]),
+                  Icon(Icons.link, size: 20, color: Colors.grey[600]),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
-                      _userData!['githubUrl'] as String,
+                      _userData!['linkedinUrl'] as String,
                       style: TextStyle(
                         fontSize: 15,
                         color: Colors.deepPurple[500],

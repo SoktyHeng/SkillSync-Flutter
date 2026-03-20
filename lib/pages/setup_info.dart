@@ -15,7 +15,7 @@ class SetupInfoPage extends StatefulWidget {
 class _SetupInfoPageState extends State<SetupInfoPage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _githubController = TextEditingController();
+  final TextEditingController _linkedinController = TextEditingController();
 
   final UserService _userService = UserService();
   final User? _currentUser = FirebaseAuth.instance.currentUser;
@@ -33,7 +33,7 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    _githubController.dispose();
+    _linkedinController.dispose();
     super.dispose();
   }
 
@@ -372,7 +372,7 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
         yearOfStudy: _selectedYear!,
         phoneNumber: _phoneController.text.trim(),
         skills: _selectedSkills,
-        githubUrl: _githubController.text.trim(),
+        linkedinUrl: _linkedinController.text.trim(),
       );
 
       if (mounted) {
@@ -645,13 +645,13 @@ class _SetupInfoPageState extends State<SetupInfoPage> {
                 ),
                 const SizedBox(height: 20),
 
-                // GitHub link (optional)
+                // LinkedIn link (optional)
                 TextField(
-                  controller: _githubController,
+                  controller: _linkedinController,
                   decoration: _buildInputDecoration(
-                    label: 'GitHub Link (Optional)',
-                    icon: Icons.code,
-                    hint: 'https://github.com/username',
+                    label: 'LinkedIn Link (Optional)',
+                    icon: Icons.link,
+                    hint: 'https://linkedin.com/in/username',
                   ),
                   keyboardType: TextInputType.url,
                 ),

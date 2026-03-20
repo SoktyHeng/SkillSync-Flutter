@@ -23,7 +23,7 @@ class UserService {
     required String yearOfStudy,
     required String phoneNumber,
     required List<String> skills,
-    String githubUrl = '',
+    String linkedinUrl = '',
   }) async {
     final user = _auth.currentUser;
     if (user == null) {
@@ -41,7 +41,7 @@ class UserService {
       'yearOfStudy': yearOfStudy,
       'phoneNumber': phoneNumber,
       'skills': skills,
-      'githubUrl': githubUrl,
+      'linkedinUrl': linkedinUrl,
       'hasCompletedSetup': true,
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),

@@ -13,7 +13,7 @@ class EditProfilePage extends StatefulWidget {
 class _EditProfilePageState extends State<EditProfilePage> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _githubController = TextEditingController();
+  final TextEditingController _linkedinController = TextEditingController();
 
   final UserService _userService = UserService();
   bool _isLoading = false;
@@ -42,7 +42,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           _userEmail = userData['email'];
           _nameController.text = userData['name'] ?? '';
           _phoneController.text = userData['phoneNumber'] ?? '';
-          _githubController.text = userData['githubUrl'] ?? '';
+          _linkedinController.text = userData['linkedinUrl'] ?? '';
           final major = userData['major'];
           _selectedMajor = _majors.contains(major) ? major : null;
           final year = userData['yearOfStudy'];
@@ -72,7 +72,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
-    _githubController.dispose();
+    _linkedinController.dispose();
     super.dispose();
   }
 
@@ -402,7 +402,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         'yearOfStudy': _selectedYear,
         'phoneNumber': _phoneController.text.trim(),
         'skills': _selectedSkills,
-        'githubUrl': _githubController.text.trim(),
+        'linkedinUrl': _linkedinController.text.trim(),
       });
 
       if (mounted) {
@@ -616,13 +616,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     ),
                     const SizedBox(height: 20),
 
-                    // GitHub link (optional)
+                    // LinkedIn link (optional)
                     TextField(
-                      controller: _githubController,
+                      controller: _linkedinController,
                       decoration: _buildInputDecoration(
-                        label: 'GitHub Link (Optional)',
-                        icon: Icons.code,
-                        hint: 'https://github.com/username',
+                        label: 'LinkedIn Link (Optional)',
+                        icon: Icons.link,
+                        hint: 'https://linkedin.com/in/username',
                       ),
                       keyboardType: TextInputType.url,
                     ),
