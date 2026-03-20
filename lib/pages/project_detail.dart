@@ -26,6 +26,11 @@ class _ProjectDetailState extends State<ProjectDetail> {
   bool _isRequesting = false;
   bool _didRequestThisSession = false;
   bool _isBookmarked = false;
+  List<String> _takenRoles = [];
+  double _averageRating = 0.0;
+  int _ratingCount = 0;
+  int? _userRating;
+  bool _isRating = false;
 
   @override
   void initState() {
@@ -33,6 +38,8 @@ class _ProjectDetailState extends State<ProjectDetail> {
     _loadCreatorInfo();
     _loadRequestStatus();
     _loadBookmarkStatus();
+    _loadTakenRoles();
+    _loadRating();
   }
 
   Future<void> _loadBookmarkStatus() async {
@@ -77,6 +84,68 @@ class _ProjectDetailState extends State<ProjectDetail> {
     }
   }
 
+  Future<void> _loadTakenRoles() async {
+    final taken = await _projectService.getTakenRoles(widget.projectId);
+    if (mounted) {
+      setState(() {
+        _takenRoles = taken;
+      });
+    }
+  }
+
+  Future<void> _loadRating() async {
+    final ratingData = await _projectService.getProjectRating(widget.projectId);
+    final userRating = await _projectService.getUserRating(widget.projectId);
+    if (mounted) {
+      setState(() {
+        _averageRating = (ratingData['average'] as num).toDouble();
+        _ratingCount = ratingData['count'] as int;
+        _userRating = userRating;
+      });
+    }
+  }
+
+  Future<void> _submitRating(int rating) async {
+    setState(() => _isRating = true);
+    try {
+      await _projectService.rateProject(widget.projectId, rating);
+      if (mounted) {
+        setState(() {
+          _userRating = rating;
+          _isRating = false;
+        });
+        await _loadRating();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isRating = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to submit rating: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        );
+      }
+    }
+  }
+
+  Widget _buildStars(double rating, {double size = 16}) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(5, (i) {
+        if (rating >= i + 1) {
+          return Icon(Icons.star, size: size, color: Colors.amber[600]);
+        } else if (rating >= i + 0.5) {
+          return Icon(Icons.star_half, size: size, color: Colors.amber[600]);
+        } else {
+          return Icon(Icons.star_border, size: size, color: Colors.amber[600]);
+        }
+      }),
+    );
+  }
+
   String _getTimeAgo(Timestamp? timestamp) {
     if (timestamp == null) return '';
     final now = DateTime.now();
@@ -96,13 +165,13 @@ class _ProjectDetailState extends State<ProjectDetail> {
     }
   }
 
-  Future<void> _sendContributeRequest() async {
+  Future<void> _sendContributeRequest({String? role}) async {
     setState(() {
       _isRequesting = true;
     });
 
     try {
-      await _projectService.requestToContribute(widget.projectId);
+      await _projectService.requestToContribute(widget.projectId, role: role);
       if (mounted) {
         setState(() {
           _requestStatus = 'pending';
@@ -137,31 +206,116 @@ class _ProjectDetailState extends State<ProjectDetail> {
   }
 
   void _showContributeDialog() {
+    final lookingFor = List<String>.from(widget.project['lookingFor'] ?? []);
+    final availableRoles =
+        lookingFor.where((r) => !_takenRoles.contains(r)).toList();
+    String? selectedRole = availableRoles.isNotEmpty ? availableRoles.first : null;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Request to Contribute'),
-        content: const Text(
-          'Would you like to send a request to join this project? The project owner will review your request.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _sendContributeRequest();
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.deepPurple[500],
-              foregroundColor: Colors.white,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Request to Contribute'),
+          content: lookingFor.isEmpty
+              ? const Text(
+                  'Would you like to send a request to join this project? The project owner will review your request.',
+                )
+              : availableRoles.isEmpty
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.group_off, size: 48, color: Colors.grey[400]),
+                    const SizedBox(height: 12),
+                    Text(
+                      'All roles have been filled',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'There are no open positions left for this project.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                    ),
+                  ],
+                )
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Select the role you\'d like to fill:'),
+                    const SizedBox(height: 12),
+                    ...availableRoles.map((role) {
+                      final isSelected = selectedRole == role;
+                      return GestureDetector(
+                        onTap: () => setDialogState(() => selectedRole = role),
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? Colors.deepPurple[50]
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isSelected
+                                  ? Colors.deepPurple[400]!
+                                  : Colors.grey[300]!,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                isSelected
+                                    ? Icons.check_circle
+                                    : Icons.circle_outlined,
+                                size: 18,
+                                color: isSelected
+                                    ? Colors.deepPurple[500]
+                                    : Colors.grey[400],
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  role,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
             ),
-            child: const Text('Send Request'),
-          ),
-        ],
+            ElevatedButton(
+              onPressed: (lookingFor.isNotEmpty && selectedRole == null)
+                  ? null
+                  : availableRoles.isEmpty && lookingFor.isNotEmpty
+                      ? null
+                      : () {
+                          Navigator.pop(context);
+                          _sendContributeRequest(role: selectedRole);
+                        },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.deepPurple[500],
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Send Request'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -449,6 +603,28 @@ class _ProjectDetailState extends State<ProjectDetail> {
                       _buildStatusBadge(status),
                     ],
                   ),
+                  const SizedBox(height: 8),
+
+                  // Average Rating
+                  if (_ratingCount > 0)
+                    Row(
+                      children: [
+                        _buildStars(_averageRating, size: 18),
+                        const SizedBox(width: 6),
+                        Text(
+                          _averageRating.toStringAsFixed(1),
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '($_ratingCount ${_ratingCount == 1 ? 'rating' : 'ratings'})',
+                          style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                        ),
+                      ],
+                    ),
                   const SizedBox(height: 16),
 
                   // Duration
@@ -472,7 +648,7 @@ class _ProjectDetailState extends State<ProjectDetail> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Duration: $duration',
+                            'Timeline: $duration',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
@@ -501,10 +677,10 @@ class _ProjectDetailState extends State<ProjectDetail> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Tech Stack Section
+                  // Skill Section
                   if (techStack.isNotEmpty) ...[
                     const Text(
-                      'Tech Stack',
+                      'Skill',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -542,7 +718,7 @@ class _ProjectDetailState extends State<ProjectDetail> {
                   // Looking For Section
                   if (lookingFor.isNotEmpty) ...[
                     const Text(
-                      'Looking For',
+                      'Looking For Roles',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -550,6 +726,7 @@ class _ProjectDetailState extends State<ProjectDetail> {
                     ),
                     const SizedBox(height: 12),
                     ...lookingFor.map((role) {
+                      final isFilled = _takenRoles.contains(role);
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 8),
                         child: Row(
@@ -557,28 +734,108 @@ class _ProjectDetailState extends State<ProjectDetail> {
                             Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: Colors.green[50],
+                                color: isFilled
+                                    ? Colors.grey[100]
+                                    : Colors.green[50],
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Icon(
-                                Icons.person_search,
+                                isFilled
+                                    ? Icons.check_circle
+                                    : Icons.person_search,
                                 size: 20,
-                                color: Colors.green[600],
+                                color: isFilled
+                                    ? Colors.grey[400]
+                                    : Colors.green[600],
                               ),
                             ),
                             const SizedBox(width: 12),
-                            Text(
-                              role,
-                              style: TextStyle(
-                                fontSize: 15,
-                                color: Colors.grey[800],
-                                fontWeight: FontWeight.w500,
+                            Expanded(
+                              child: Text(
+                                role,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  color: isFilled
+                                      ? Colors.grey[400]
+                                      : Colors.grey[800],
+                                  fontWeight: FontWeight.w500,
+                                  decoration: isFilled
+                                      ? TextDecoration.lineThrough
+                                      : null,
+                                ),
                               ),
                             ),
+                            if (isFilled)
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey[200],
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  'Filled',
+                                  style: TextStyle(
+                                      fontSize: 11, color: Colors.grey[600]),
+                                ),
+                              )
+                            else
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: Colors.green[50],
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  'Open',
+                                  style: TextStyle(
+                                      fontSize: 11, color: Colors.green[700]),
+                                ),
+                              ),
                           ],
                         ),
                       );
                     }),
+                  ],
+
+                  // Rate this project (contributors only)
+                  if (_requestStatus == 'accepted') ...[
+                    const SizedBox(height: 24),
+                    const Divider(),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Rate this Project',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _userRating != null
+                          ? 'Your rating: $_userRating/5 — tap to change'
+                          : 'Share your experience as a contributor',
+                      style: TextStyle(fontSize: 13, color: Colors.grey[500]),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: List.generate(5, (i) {
+                        final star = i + 1;
+                        return GestureDetector(
+                          onTap: _isRating ? null : () => _submitRating(star),
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: Icon(
+                              star <= (_userRating ?? 0)
+                                  ? Icons.star
+                                  : Icons.star_border,
+                              size: 36,
+                              color: _isRating
+                                  ? Colors.amber[300]
+                                  : Colors.amber[600],
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
                   ],
 
                   // Bottom spacing for button

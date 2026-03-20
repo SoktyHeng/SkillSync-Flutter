@@ -40,9 +40,12 @@ class _HomePageState extends State<HomePage> {
   bool _hasMore = true;
   static const int _pageSize = 10;
 
+  Set<String> _contributingProjectIds = {};
+
   @override
   void initState() {
     super.initState();
+    _loadContributingProjectIds();
     _loadProjects();
     _scrollController.addListener(_onScroll);
   }
@@ -63,11 +66,22 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _loadContributingProjectIds() async {
+    final projects = await _projectService.getContributingProjects();
+    if (mounted) {
+      setState(() {
+        _contributingProjectIds = projects.map((p) => p['projectId'] as String).toSet();
+      });
+    }
+  }
+
   Future<void> _loadProjects() async {
     if (_isLoading) return;
     setState(() {
       _isLoading = true;
     });
+
+    await _loadContributingProjectIds();
 
     try {
       final snapshot = await _projectService.getProjectsPaginated(
@@ -206,7 +220,7 @@ class _HomePageState extends State<HomePage> {
 
                   // Duration Section
                   Text(
-                    'Duration',
+                    'Timeline',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -563,6 +577,7 @@ class _HomePageState extends State<HomePage> {
     final filteredProjects = _projects.where((doc) {
       final data = doc.data() as Map<String, dynamic>;
       if (data['uid'] == currentUserId) return false;
+      if (_contributingProjectIds.contains(doc.id)) return false;
       if (!_matchesSearchQuery(data)) return false;
       if (_selectedDuration != 'All') {
         final duration = data['duration'] as String?;
@@ -583,8 +598,8 @@ class _HomePageState extends State<HomePage> {
         emptyMessage = 'No projects found for "$_searchQuery"';
         emptySubtitle = 'Try a different search term';
       } else if (_selectedDuration != 'All') {
-        emptyMessage = 'No projects with $_selectedDuration duration';
-        emptySubtitle = 'Try a different duration filter';
+        emptyMessage = 'No projects with $_selectedDuration timeline';
+        emptySubtitle = 'Try a different timeline filter';
       } else {
         emptyMessage = 'No projects yet';
         emptySubtitle = 'Check back later for new projects!';
@@ -667,6 +682,8 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
   bool _isLoading = true;
   int _contributorCount = 0;
   String? _userRequestStatus;
+  double _averageRating = 0.0;
+  int _ratingCount = 0;
 
   @override
   void initState() {
@@ -674,6 +691,7 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
     _loadCreatorInfo();
     _loadContributorCount();
     _loadUserRequestStatus();
+    _loadRating();
   }
 
   Future<void> _loadUserRequestStatus() async {
@@ -707,6 +725,16 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
     if (mounted) {
       setState(() {
         _contributorCount = count;
+      });
+    }
+  }
+
+  Future<void> _loadRating() async {
+    final ratingData = await widget.projectService.getProjectRating(widget.projectId);
+    if (mounted) {
+      setState(() {
+        _averageRating = (ratingData['average'] as num).toDouble();
+        _ratingCount = ratingData['count'] as int;
       });
     }
   }
@@ -888,7 +916,7 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
                   children: [
                     Expanded(
                       child: Text(
-                        'Looking for: ${lookingFor.join(", ")}',
+                        'Looking for roles: ${lookingFor.join(", ")}',
                         style: TextStyle(
                           fontSize: 13,
                           color: Colors.green[700],
@@ -903,7 +931,7 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
                 const SizedBox(height: 12),
               ],
 
-              // Contributors count
+              // Contributors count and Rating
               Row(
                 children: [
                   Icon(Icons.group, size: 16, color: Colors.grey[600]),
@@ -916,6 +944,19 @@ class _ProjectFeedCardState extends State<_ProjectFeedCard> {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
+                  if (_ratingCount > 0) ...[
+                    const SizedBox(width: 12),
+                    Icon(Icons.star, size: 14, color: Colors.amber[600]),
+                    const SizedBox(width: 3),
+                    Text(
+                      '${_averageRating.toStringAsFixed(1)} ($_ratingCount)',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ],

@@ -159,6 +159,14 @@ class _ProjectCreationState extends State<ProjectCreation> {
       _showSnackBar('Please enter a description');
       return;
     }
+    if (_techStackController.text.trim().isEmpty) {
+      _showSnackBar('Please enter the tech stack');
+      return;
+    }
+    if (_lookingForController.text.trim().isEmpty) {
+      _showSnackBar('Please enter the looking for roles');
+      return;
+    }
 
     setState(() {
       _isLoading = true;
@@ -321,9 +329,14 @@ class _ProjectCreationState extends State<ProjectCreation> {
                   ),
                   const SizedBox(height: 20),
 
-                  const Text(
-                    'Tech Stack (comma separated)',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  RichText(
+                    text: const TextSpan(
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black),
+                      children: [
+                        TextSpan(text: 'Skill (comma separated)'),
+                        TextSpan(text: ' *', style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 8),
                   TextField(
@@ -334,9 +347,14 @@ class _ProjectCreationState extends State<ProjectCreation> {
                   ),
                   const SizedBox(height: 20),
 
-                  const Text(
-                    'Looking For (roles needed)',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  RichText(
+                    text: const TextSpan(
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Colors.black),
+                      children: [
+                        TextSpan(text: 'Looking For Roles:'),
+                        TextSpan(text: ' *', style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 8),
                   TextField(
@@ -357,13 +375,12 @@ class _ProjectCreationState extends State<ProjectCreation> {
                     children: [
                       _buildStatusChip('recruiting', 'Recruiting', Colors.deepPurple),
                       _buildStatusChip('in_progress', 'In Progress', Colors.orange),
-                      _buildStatusChip('completed', 'Completed', Colors.green),
                     ],
                   ),
                   const SizedBox(height: 20),
 
                   const Text(
-                    'Duration',
+                    'Timeline',
                     style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
                   ),
                   const SizedBox(height: 8),

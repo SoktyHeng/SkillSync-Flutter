@@ -532,7 +532,7 @@ class _ProjectCardState extends State<_ProjectCard> {
                     Icon(Icons.schedule, size: 16, color: Colors.grey[600]),
                     const SizedBox(width: 6),
                     Text(
-                      'Duration: ',
+                      'Timeline: ',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

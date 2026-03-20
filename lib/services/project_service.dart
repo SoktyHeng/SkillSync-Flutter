@@ -281,7 +281,7 @@ class ProjectService {
   }
 
   // Send a contribution request
-  Future<void> requestToContribute(String projectId) async {
+  Future<void> requestToContribute(String projectId, {String? role}) async {
     final user = _auth.currentUser;
     if (user == null) {
       throw Exception('No user logged in');
@@ -307,12 +307,33 @@ class ProjectService {
           .add({
         'userId': user.uid,
         'status': 'pending',
+        'role': role,
         'createdAt': FieldValue.serverTimestamp(),
       });
       debugPrint('Contribution request sent successfully');
     } catch (e) {
       debugPrint('Error sending contribution request: $e');
       rethrow;
+    }
+  }
+
+  // Get roles already filled by accepted contributors
+  Future<List<String>> getTakenRoles(String projectId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('projects')
+          .doc(projectId)
+          .collection('requests')
+          .where('status', isEqualTo: 'accepted')
+          .get();
+      return snapshot.docs
+          .map((doc) => doc.data()['role'] as String?)
+          .where((role) => role != null && role.isNotEmpty)
+          .cast<String>()
+          .toList();
+    } catch (e) {
+      debugPrint('Error getting taken roles: $e');
+      return [];
     }
   }
 
@@ -494,6 +515,70 @@ class ProjectService {
       return request.docs.first.data()['status'] as String?;
     } catch (e) {
       debugPrint('Error checking request status: $e');
+      return null;
+    }
+  }
+
+  // Submit or update a rating for a project (contributors only)
+  Future<void> rateProject(String projectId, int rating) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('No user logged in');
+
+    await _firestore
+        .collection('projects')
+        .doc(projectId)
+        .collection('ratings')
+        .doc(user.uid)
+        .set({
+      'rating': rating,
+      'userId': user.uid,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  // Get average rating and count for a project
+  Future<Map<String, dynamic>> getProjectRating(String projectId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('projects')
+          .doc(projectId)
+          .collection('ratings')
+          .get();
+
+      if (snapshot.docs.isEmpty) return {'average': 0.0, 'count': 0};
+
+      final ratings = snapshot.docs
+          .map((doc) => doc.data()['rating'] as int? ?? 0)
+          .where((r) => r > 0)
+          .toList();
+
+      if (ratings.isEmpty) return {'average': 0.0, 'count': 0};
+
+      final average = ratings.reduce((a, b) => a + b) / ratings.length;
+      return {'average': average, 'count': ratings.length};
+    } catch (e) {
+      debugPrint('Error getting project rating: $e');
+      return {'average': 0.0, 'count': 0};
+    }
+  }
+
+  // Get the current user's rating for a project
+  Future<int?> getUserRating(String projectId) async {
+    final user = _auth.currentUser;
+    if (user == null) return null;
+
+    try {
+      final doc = await _firestore
+          .collection('projects')
+          .doc(projectId)
+          .collection('ratings')
+          .doc(user.uid)
+          .get();
+
+      if (!doc.exists) return null;
+      return doc.data()?['rating'] as int?;
+    } catch (e) {
+      debugPrint('Error getting user rating: $e');
       return null;
     }
   }
