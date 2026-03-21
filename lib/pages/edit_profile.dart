@@ -26,7 +26,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   List<String> get _majors => AppData.majors;
   List<String> get _years => AppData.years;
-  List<String> get _availableSkills => AppData.skills;
 
   @override
   void initState() {
@@ -114,15 +113,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setModalState) {
-            final filteredSkills = _availableSkills
-                .where((skill) =>
-                    skill.toLowerCase().contains(searchQuery.toLowerCase()))
-                .toList();
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            final suggested = AppData.suggestedSkillsByMajor[_selectedMajor] ?? [];
 
             final bool canAddCustomSkill = searchQuery.trim().isNotEmpty &&
-                !_availableSkills
-                    .map((s) => s.toLowerCase())
-                    .contains(searchQuery.trim().toLowerCase()) &&
                 !_selectedSkills
                     .map((s) => s.toLowerCase())
                     .contains(searchQuery.trim().toLowerCase());
@@ -138,12 +132,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Handle bar
                       Center(
                         child: Container(
                           width: 40,
                           height: 4,
                           decoration: BoxDecoration(
-                            color: Colors.grey[300],
+                            color: isDark ? Colors.grey[600] : Colors.grey[300],
                             borderRadius: BorderRadius.circular(2),
                           ),
                         ),
@@ -151,18 +146,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       const SizedBox(height: 20),
                       const Text(
                         'Select Your Skills',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Choose skills or add your own',
-                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 16),
-                      // Search field
+                      // Search / add field
                       TextField(
                         controller: searchController,
                         decoration: InputDecoration(
@@ -173,36 +160,22 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                   icon: const Icon(Icons.clear),
                                   onPressed: () {
                                     searchController.clear();
-                                    setModalState(() {
-                                      searchQuery = '';
-                                    });
+                                    setModalState(() => searchQuery = '');
                                   },
                                 )
                               : null,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(color: Colors.grey[300]!),
+                            borderSide: BorderSide(color: isDark ? Colors.grey[700]! : Colors.grey[300]!),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12),
-                            borderSide: BorderSide(
-                              color: Colors.deepPurple[500]!,
-                              width: 2,
-                            ),
+                            borderSide: BorderSide(color: Colors.deepPurple[500]!, width: 2),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         ),
-                        onChanged: (value) {
-                          setModalState(() {
-                            searchQuery = value;
-                          });
-                        },
+                        onChanged: (value) => setModalState(() => searchQuery = value),
                       ),
                       const SizedBox(height: 12),
                       // Add custom skill button
@@ -225,24 +198,16 @@ class _EditProfilePageState extends State<EditProfilePage> {
                               decoration: BoxDecoration(
                                 color: Colors.deepPurple[50],
                                 borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: Colors.deepPurple[200]!,
-                                ),
+                                border: Border.all(color: Colors.deepPurple[200]!),
                               ),
                               child: Row(
                                 children: [
-                                  Icon(
-                                    Icons.add_circle,
-                                    color: Colors.deepPurple[500],
-                                  ),
+                                  Icon(Icons.add_circle, color: Colors.deepPurple[500]),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Text(
                                       'Add "${searchQuery.trim()}" as a skill',
-                                      style: TextStyle(
-                                        color: Colors.deepPurple[700],
-                                        fontWeight: FontWeight.w500,
-                                      ),
+                                      style: TextStyle(color: Colors.deepPurple[700], fontWeight: FontWeight.w500),
                                     ),
                                   ),
                                 ],
@@ -250,87 +215,64 @@ class _EditProfilePageState extends State<EditProfilePage> {
                             ),
                           ),
                         ),
-                      // Skills list
+                      // Skills content
                       Expanded(
                         child: SingleChildScrollView(
                           controller: scrollController,
-                          child: Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Show selected custom skills (not in predefined list)
-                              ..._selectedSkills
-                                  .where((skill) => !_availableSkills
-                                      .map((s) => s.toLowerCase())
-                                      .contains(skill.toLowerCase()))
-                                  .where((skill) =>
-                                      searchQuery.isEmpty ||
-                                      skill
-                                          .toLowerCase()
-                                          .contains(searchQuery.toLowerCase()))
-                                  .map((skill) {
-                                return FilterChip(
-                                  label: Text(skill),
-                                  selected: true,
-                                  onSelected: (selected) {
-                                    setModalState(() {
-                                      _selectedSkills.remove(skill);
-                                    });
-                                    setState(() {});
-                                  },
-                                  selectedColor: Colors.deepPurple[500]
-                                      ?.withValues(alpha: 0.2),
-                                  checkmarkColor: Colors.deepPurple[500],
-                                  labelStyle: TextStyle(
-                                    color: Colors.deepPurple[500],
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                    side: BorderSide(
-                                      color: Colors.deepPurple[500]!,
+                              // Suggested skills
+                              if (suggested.isNotEmpty && searchQuery.isEmpty) ...[
+                                Row(
+                                  children: [
+                                    Icon(Icons.auto_awesome, size: 14, color: Colors.deepPurple[400]),
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        'Suggested for ${_selectedMajor ?? 'your major'}',
+                                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.deepPurple[600]),
+                                      ),
                                     ),
-                                  ),
-                                );
-                              }),
-                              // Show filtered predefined skills
-                              ...filteredSkills.map((skill) {
-                                final isSelected =
-                                    _selectedSkills.contains(skill);
-                                return FilterChip(
-                                  label: Text(skill),
-                                  selected: isSelected,
-                                  onSelected: (selected) {
-                                    setModalState(() {
-                                      if (selected) {
-                                        _selectedSkills.add(skill);
-                                      } else {
-                                        _selectedSkills.remove(skill);
-                                      }
-                                    });
-                                    setState(() {});
-                                  },
-                                  selectedColor: Colors.deepPurple[500]
-                                      ?.withValues(alpha: 0.2),
-                                  checkmarkColor: Colors.deepPurple[500],
-                                  labelStyle: TextStyle(
-                                    color: isSelected
-                                        ? Colors.deepPurple[500]
-                                        : null,
-                                    fontWeight: isSelected
-                                        ? FontWeight.w600
-                                        : FontWeight.normal,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(20),
-                                    side: BorderSide(
-                                      color: isSelected
-                                          ? Colors.deepPurple[500]!
-                                          : Colors.grey[300]!,
-                                    ),
-                                  ),
-                                );
-                              }),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Wrap(
+                                  spacing: 8,
+                                  runSpacing: 8,
+                                  children: suggested.map((skill) {
+                                    final isSelected = _selectedSkills
+                                        .map((s) => s.toLowerCase())
+                                        .contains(skill.toLowerCase());
+                                    return FilterChip(
+                                      label: Text(skill),
+                                      selected: isSelected,
+                                      onSelected: (_) {
+                                        setModalState(() {
+                                          if (isSelected) {
+                                            _selectedSkills.removeWhere((s) => s.toLowerCase() == skill.toLowerCase());
+                                          } else {
+                                            _selectedSkills.add(skill);
+                                          }
+                                        });
+                                        setState(() {});
+                                      },
+                                      selectedColor: Colors.deepPurple[500]?.withValues(alpha: 0.2),
+                                      checkmarkColor: Colors.deepPurple[700],
+                                      labelStyle: TextStyle(
+                                        color: isSelected ? Colors.deepPurple[500] : null,
+                                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(20),
+                                        side: BorderSide(
+                                          color: isSelected ? Colors.deepPurple[500]! : (isDark ? Colors.grey[700]! : Colors.grey[300]!),
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
                             ],
                           ),
                         ),
@@ -344,17 +286,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.deepPurple[500],
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                          child: const Text(
-                            'Done',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          child: const Text('Done', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                         ),
                       ),
                     ],
