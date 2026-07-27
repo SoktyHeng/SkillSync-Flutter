@@ -70,14 +70,12 @@ flutter run
 
 ## 🚧 Roadmap
 
-- [ ] Push notifications
 - [ ] In-app file sharing
 - [ ] Advanced search filtering by academic year and department
 - [ ] Content moderation system
 - [ ] Multi-language support (incl. Thai localization)
 - [ ] iOS platform support
-- [ ] Google Play Store publication
 
 ## 📄 License
 
-This project is developed for academic purposes at Abraham Baldwin Agricultural College (ABAC).
+This project is developed for academic purposes at Assumption Univversity of Thailand (ABAC).
